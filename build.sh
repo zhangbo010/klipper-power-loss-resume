@@ -29,9 +29,11 @@ DATA="$FLYOS_ROOT/data"
 [[ -f "$DATA/klipper/klippy/extras/power_loss_resume.py" ]] || die "检查 FLYOS_ROOT: $FLYOS_ROOT"
 
 rm -rf "$OUT_DIR"
+[[ -f "$SCRIPT_DIR/VERSION" ]] && VER="$(tr -d '\r\n' <"$SCRIPT_DIR/VERSION")" || VER="0.0.0"
 mkdir -p "$OUT_DIR/klipper/klippy/extras"
 mkdir -p "$OUT_DIR/klipperscreen/panels"
 mkdir -p "$OUT_DIR/config" "$OUT_DIR/install" "$OUT_DIR/docs"
+[[ -f "$SCRIPT_DIR/VERSION" ]] && cp -a "$SCRIPT_DIR/VERSION" "$OUT_DIR/VERSION"
 
 cp -a "$DATA/klipper/klippy/extras/power_loss_resume.py" "$DATA/klipper/klippy/extras/virtual_sdcard.py" \
   "$OUT_DIR/klipper/klippy/extras/"
@@ -58,7 +60,7 @@ if [[ -d "$SCRIPT_DIR/docs/nginx-flyos" ]]; then
 fi
 
 GEN="$(date '+%Y-%m-%d %H:%M:%S')"
-sed "s/{{GENERATED_AT}}/$GEN/g" "$SCRIPT_DIR/README.template.md" > "$OUT_DIR/README.md"
+sed -e "s/{{GENERATED_AT}}/$GEN/g" -e "s/{{VERSION}}/${VER}/g" "$SCRIPT_DIR/README.template.md" > "$OUT_DIR/README.md"
 cp -a "$SCRIPT_DIR/.gitignore" "$OUT_DIR/.gitignore"
 [[ -f "$SCRIPT_DIR/LICENSE" ]] && cp -a "$SCRIPT_DIR/LICENSE" "$OUT_DIR/LICENSE"
 [[ -f "$SCRIPT_DIR/PUBLISH_GITHUB.md" ]] && cp -a "$SCRIPT_DIR/PUBLISH_GITHUB.md" "$OUT_DIR/PUBLISH_GITHUB.md"

@@ -33,6 +33,7 @@ fi
 
 echo ""
 echo "======== Klipper 断电续打（PLR）交互安装 ========"
+echo "版本: $(plr_kit_version)"
 echo ""
 
 # --- Klipper / printer_data 路径 ---

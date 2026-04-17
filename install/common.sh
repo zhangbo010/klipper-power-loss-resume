@@ -2,6 +2,18 @@
 # 供 install-*.sh 与交互安装脚本 source；勿单独执行
 # shellcheck shell=bash
 
+# 仓库根目录单行 VERSION 文件（与 README 发版号同步）
+plr_kit_version() {
+  local root vf
+  root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  vf="${root}/VERSION"
+  if [[ -f "$vf" ]]; then
+    tr -d '\r\n' <"$vf"
+  else
+    echo "unknown"
+  fi
+}
+
 # sudo 时 HOME 常为 /root，改用实际登录用户的家目录
 effective_home() {
   if [[ -n "${SUDO_USER:-}" ]]; then

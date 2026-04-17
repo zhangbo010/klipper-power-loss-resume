@@ -1,6 +1,9 @@
 # Klipper 断电续打（PLR）移植包
 
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](./LICENSE)
+![Version](https://img.shields.io/badge/version-{{VERSION}}-informational)
+
+**版本：{{VERSION}}**（由 `build.sh` 自 `VERSION` 注入；根目录 `VERSION` 为唯一源。）
 
 Klipper **断电续打（Power Loss Resume）** 整合包：含 Klipper 模块、KlipperScreen 补丁、示例配置、安装脚本与文档。可与 **Moonraker** 及定制 **Mainsail / Fluidd** 前端配合使用。
 
@@ -104,4 +107,4 @@ cd klipper-power-loss-resume
 见根目录 **`LICENSE`**（GPLv3）。使用本包须自行承担硬件与配置风险。
 
 ---
-*生成时间: {{GENERATED_AT}}*
+*版本 {{VERSION}} · 生成时间: {{GENERATED_AT}}*

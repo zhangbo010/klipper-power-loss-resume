@@ -1,5 +1,7 @@
 # Klipper 断电续打（PLR）
 
+**当前版本：1.1.0**（以仓库根目录 [`VERSION`](./VERSION) 为准；发版时请同步修改。）
+
 适用于已通过 **KIAUH**、官方脚本或各发行版安装的 **标准 Klipper**（**不需要** FlyOS）。可与 **Moonraker** 及定制 **Mainsail / Fluidd** 前端配合；详见 `docs/SKILL.md`。
 
 ## 安装方法
@@ -125,6 +127,7 @@ sudo systemctl restart klipper
 | `klipper/klippy/extras/` | `power_loss_resume.py`、修改版 `virtual_sdcard.py` |
 | `klipperscreen/` | KlipperScreen 相关补丁 |
 | `config/` | `plr.cfg.example` |
+| `VERSION` | **发行版本号**（单行，与下文「当前版本」同步） |
 | `install.sh` | **交互安装入口**（Klipper + 可选 KS + 可选 Web） |
 | `install/` | `install-*.sh`、`post-setup.sh`、`ensure-psutil.sh`（psutil 排错） |
 | `web/mainsail`、`web/fluidd` | 定制前端静态资源（PLR 弹窗） |
