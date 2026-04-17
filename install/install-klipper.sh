@@ -36,12 +36,10 @@ CFG_DIR=""
 
 KPY="$(detect_klipper_python)" || die "无法找到 Klipper 使用的 Python（需 python3 或 \$KLIPPER_HOME/venv/bin/python）"
 echo "==> Klipper Python: $KPY"
-"$KPY" -c "import psutil" 2>/dev/null || {
-  echo "错误: 在 $KPY 中未找到 psutil（Klipper 与系统 python3 可能不是同一个环境）。"
-  echo "请执行: $KPY -m pip install psutil"
-  echo "或（若 Klipper 用系统 python3）: sudo apt install python3-psutil"
-  exit 1
-}
+if ! "$KPY" -c "import psutil" 2>/dev/null; then
+  echo "==> 未找到 psutil，正在安装（优先使用仓库 vendor/psutil 离线 wheel）…"
+  bash "${SCRIPT_DIR}/ensure-psutil.sh" || die "psutil 安装失败"
+fi
 
 echo "==> KLIPPER_HOME=$KLIPPER_HOME"
 [[ -n "$PRINTER_DATA" ]] && echo "==> PRINTER_DATA=$PRINTER_DATA"

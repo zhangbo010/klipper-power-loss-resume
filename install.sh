@@ -89,27 +89,15 @@ fi
 KPY="$(detect_klipper_python)" || die "无法找到 python3，请先安装 Python3。"
 echo "==> Klipper 使用的 Python（用于检查 psutil）: $KPY"
 if ! "$KPY" -c "import psutil" 2>/dev/null; then
-  echo "未在「上述」解释器中找到 psutil；Klipper 启动时会报 No module named 'psutil'。"
+  echo "未在「上述」解释器中找到 psutil；将优先使用仓库 vendor/psutil 中的 wheel 离线安装。"
   _ps="$(read_yesno "是否自动安装 psutil 到该 Python？[Y/n] ")"
   if [[ -z "${_ps}" ]] || [[ "${_ps}" == [Yy]* ]]; then
-    if [[ "$KPY" == *"/venv/bin/python"* ]] || [[ "$KPY" == *"/.venv/bin/python"* ]]; then
-      if [[ -n "${SUDO_USER:-}" ]]; then
-        sudo -u "${SUDO_USER}" -- "$KPY" -m pip install psutil
-      else
-        "$KPY" -m pip install psutil
-      fi
-    else
-      if command -v apt-get >/dev/null; then
-        apt-get update -qq && apt-get install -y python3-psutil
-      else
-        "$KPY" -m pip install psutil
-      fi
-    fi
+    bash "${INST}/ensure-psutil.sh" || die "psutil 安装失败，请见 README 或 bash install/ensure-psutil.sh"
   else
-    die "请先安装: $KPY -m pip install psutil"
+    die "请先执行: bash install/ensure-psutil.sh（或 $KPY -m pip install psutil）"
   fi
 fi
-"$KPY" -c "import psutil" 2>/dev/null || die "psutil 仍不可用，请手动执行: $KPY -m pip install psutil"
+"$KPY" -c "import psutil" 2>/dev/null || die "psutil 仍不可用，请执行: bash install/ensure-psutil.sh"
 
 echo ""
 echo ">>> 正在安装 Klipper 插件 …"

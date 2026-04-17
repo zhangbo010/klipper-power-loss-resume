@@ -98,25 +98,22 @@ sudo bash install/post-setup.sh /home/你的用户/printer_data yes
 
 ### 故障排除：`No module named 'psutil'`
 
-定制版 **`virtual_sdcard.py`** 依赖 **`psutil`**，且必须与 **Klipper 实际使用的 Python** 一致。若只用系统包安装了 **`python3-psutil`**，而 Klipper 运行在 **`~/klipper/venv`** 里，仍会报错。
+定制版 **`virtual_sdcard.py`** 依赖 **`psutil`**，且必须与 **Klipper 实际使用的 Python** 一致（常见为 **`~/klipper/venv`**，与系统 **`python3-psutil`** 不是同一环境）。
+
+仓库自带 **`vendor/psutil/*.whl`**（Linux x86_64 / aarch64），**`install/ensure-psutil.sh`** 会**优先离线安装**，无需访问 PyPI。
 
 **处理：**
 
 ```bash
-# 查看 Klipper 用的 Python（常见为 venv）
-grep ExecStart /etc/systemd/system/klipper.service
-# 或
-ls ~/klipper/venv/bin/python
-
-# 把 psutil 装进该解释器（推荐）
-~/klipper/venv/bin/python -m pip install psutil
+cd ~/klipper-power-loss-resume
+bash install/ensure-psutil.sh
 sudo systemctl restart klipper
 ```
 
-或在仓库根目录执行（会自动探测 `KLIPPER_HOME`）：
+仍失败时再手动把 psutil 装进 Klipper 的 Python，例如：
 
 ```bash
-bash install/ensure-psutil.sh
+~/klipper/venv/bin/python -m pip install psutil
 sudo systemctl restart klipper
 ```
 
@@ -133,7 +130,8 @@ sudo systemctl restart klipper
 | `config/` | `plr.cfg.example` |
 | `VERSION` | **发行版本号**（单行，与下文「当前版本」同步） |
 | `install.sh` | **交互安装入口**（Klipper + 可选 KS + 可选 Web） |
-| `install/` | `install-*.sh`、`post-setup.sh`、`ensure-psutil.sh`、`diagnose-web-ui.sh`、`install-nginx-dual-ui.sh`、`nginx-disable-conflicting-sites.sh`、`nginx-templates/` |
+| `install/` | `install-*.sh`、`post-setup.sh`、`ensure-psutil.sh`、`download-vendor-psutil.sh`、`diagnose-web-ui.sh`、`install-nginx-dual-ui.sh`、`nginx-disable-conflicting-sites.sh`、`nginx-templates/` |
+| `vendor/psutil/` | 随仓库提供的 **psutil** 离线 **wheel**（见内 README） |
 | `docs/nginx-generic/` | 双 UI 通用 nginx 原理与 **`install-nginx-dual-ui.sh`** |
 | `docs/nginx-flyos/` | FlyOS 原始片段对照 |
 | `web/mainsail`、`web/fluidd` | 定制前端静态资源（PLR 弹窗） |

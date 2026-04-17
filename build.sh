@@ -47,7 +47,8 @@ cp -a "$SCRIPT_DIR/install/common.sh" "$SCRIPT_DIR/install/install-klipper.sh" \
   "$SCRIPT_DIR/install/install-klipperscreen.sh" "$SCRIPT_DIR/install/install-web.sh" \
   "$SCRIPT_DIR/install/post-setup.sh" "$SCRIPT_DIR/install/ensure-psutil.sh" \
   "$SCRIPT_DIR/install/diagnose-web-ui.sh" "$SCRIPT_DIR/install/install-nginx-dual-ui.sh" \
-  "$SCRIPT_DIR/install/nginx-disable-conflicting-sites.sh" "$OUT_DIR/install/"
+  "$SCRIPT_DIR/install/nginx-disable-conflicting-sites.sh" \
+  "$SCRIPT_DIR/install/download-vendor-psutil.sh" "$OUT_DIR/install/"
 cp -a "$SCRIPT_DIR/install.sh" "$OUT_DIR/install.sh"
 [[ -d "$SCRIPT_DIR/install/nginx-templates" ]] && cp -a "$SCRIPT_DIR/install/nginx-templates" "$OUT_DIR/install/"
 chmod +x "$OUT_DIR/install.sh" "$OUT_DIR/install/"*.sh
@@ -64,6 +65,10 @@ fi
 if [[ -d "$SCRIPT_DIR/docs/nginx-generic" ]]; then
   mkdir -p "$OUT_DIR/docs/nginx-generic"
   cp -a "$SCRIPT_DIR/docs/nginx-generic/." "$OUT_DIR/docs/nginx-generic/"
+fi
+if [[ -d "$SCRIPT_DIR/vendor/psutil" ]]; then
+  mkdir -p "$OUT_DIR/vendor/psutil"
+  cp -a "$SCRIPT_DIR/vendor/psutil/." "$OUT_DIR/vendor/psutil/"
 fi
 
 GEN="$(date '+%Y-%m-%d %H:%M:%S')"

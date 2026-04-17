@@ -27,14 +27,7 @@ cd klipper-power-loss-resume
 
 ### 2. 依赖
 
-交互安装会在缺少 **psutil** 时询问是否用 **apt** 安装。也可先手动安装：
-
-```bash
-sudo apt update
-sudo apt install -y python3-psutil
-```
-
-其他系统：`pip3 install psutil`（与 Klipper 所用 Python 一致）。
+**psutil**：定制 **`virtual_sdcard`** 需要；Klipper 常用 **`~/klipper/venv`**，与系统 **`apt install python3-psutil`** 不是同一 Python。仓库含 **`vendor/psutil/*.whl`**（Linux x86_64 / aarch64），**`install/ensure-psutil.sh`** 会优先离线装入 venv。若仍缺，再 `pip install psutil` 或 `apt install python3-psutil`（仅当 Klipper 用系统 python3 时）。
 
 ### 3. 交互安装（推荐）
 
@@ -76,7 +69,8 @@ sudo PRINTER_DATA=/path/to/printer_data bash install/post-setup.sh
 | `klipperscreen/` | `screen.py`、`panels/main_menu.py`（PLR 相关改动） |
 | `config/` | `plr.cfg.example` |
 | `install.sh` | **交互安装入口**（Klipper + 可选 KS + Web） |
-| `install/` | `common.sh`、`install-*.sh`、`post-setup.sh`、`diagnose-web-ui.sh`、`install-nginx-dual-ui.sh`、`nginx-disable-conflicting-sites.sh`、`nginx-templates/` |
+| `install/` | `common.sh`、`install-*.sh`、`post-setup.sh`、`ensure-psutil.sh`、`download-vendor-psutil.sh`、`diagnose-web-ui.sh`、`install-nginx-dual-ui.sh`、`nginx-disable-conflicting-sites.sh`、`nginx-templates/` |
+| `vendor/psutil/` | 随仓库提供的 psutil 离线 wheel |
 | `docs/` | 功能说明；**`nginx-generic/`** 双 UI 通用部署；**`nginx-flyos/`** FlyOS 片段对照 |
 | `web/mainsail`、`web/fluidd` | 定制前端静态资源 |
 

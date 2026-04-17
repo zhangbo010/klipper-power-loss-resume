@@ -9,6 +9,10 @@ set -euo pipefail
 PRINTER_DATA="${1:-${PRINTER_DATA:-}}"
 RESTART_KS="${2:-no}"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=common.sh
+source "${SCRIPT_DIR}/common.sh"
+
 run_as_owner() {
   if [[ -n "${SUDO_USER:-}" ]] && [[ "$(id -u)" -eq 0 ]] && id -u "${SUDO_USER}" &>/dev/null; then
     sudo -u "${SUDO_USER}" -- "$@"
@@ -53,6 +57,17 @@ fi
 
 echo ""
 echo "重要: 请打开 ${CFG}/plr.cfg 按主板核对/修改 power_pin 等项。"
+
+# 2b) 确保 psutil（PLR 定制 virtual_sdcard 依赖）
+if KH="$(detect_klipper_home 2>/dev/null)"; then
+  export KLIPPER_HOME="$KH"
+  if KPY="$(detect_klipper_python 2>/dev/null)"; then
+    if ! "$KPY" -c "import psutil" 2>/dev/null; then
+      echo "==> Klipper 所用 Python 缺少 psutil，尝试安装（优先仓库 vendor/psutil）…"
+      bash "${SCRIPT_DIR}/ensure-psutil.sh" || echo "警告: psutil 未就绪，Klipper 可能报 No module named psutil，请执行: bash install/ensure-psutil.sh"
+    fi
+  fi
+fi
 
 # 3) 重启 Klipper
 if command -v systemctl >/dev/null 2>&1; then
