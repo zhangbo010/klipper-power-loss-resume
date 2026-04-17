@@ -1,6 +1,10 @@
 # 断电续打 — 加入 printer.cfg： [include plr.cfg]
 # power_pin 可选：有则注册电源键/关机检测引脚；通用 Klipper 无专用引脚时可不写（不注册 [buttons]）
 # 按需调整 start_gcode / shutdown_gcode
+#
+# 下面模板使用 M118；必须在配置中加载 respond 模块，否则会 Unknown command M118。
+# 若已 include mainsail.cfg / fluidd.cfg，一般已有 [respond]，可删本节。
+[respond]
 
 [power_loss_resume]
 # power_pin: PA10
