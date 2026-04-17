@@ -36,7 +36,7 @@ cd klipper-power-loss-resume
 bash install.sh
 ```
 
-流程：**自动 `ensure-psutil`**（缺则装）→ **确认 Klipper / `printer_data` 路径** → **安装 Klipper 插件** → **可选 KlipperScreen** → **可选部署 Mainsail/Fluidd** → **自动**：`plr.cfg.example` 复制为 `plr.cfg`（若尚无）、在 `printer.cfg` 追加 `[include plr.cfg]`、`systemctl restart klipper`（若本步装了 KlipperScreen 则尝试重启其服务）。**仍需你核对** `plr.cfg` 里的 **`power_pin`** 等与主板一致；浏览器缓存请本地 **Ctrl+F5**（脚本无法代劳）。跳过 **`ensure-psutil`**：`SKIP_ENSURE_PSUTIL=1`；跳过收尾：**`SKIP_AUTO_POST=1`**。
+流程：**自动 `ensure-psutil`**（缺则装）→ **确认 Klipper / `printer_data` 路径** → **安装 Klipper 插件** → **可选 KlipperScreen** → **可选部署 Mainsail/Fluidd** → **自动**：`plr.cfg.example` 复制为 `plr.cfg`（若尚无）、在 `printer.cfg` 追加 `[include plr.cfg]`、`systemctl restart klipper`（若本步装了 KlipperScreen 则尝试重启其服务）。**仍需你核对** `plr.cfg` 里的 **`power_pin`** 等与主板一致；浏览器缓存请本地 **Ctrl+F5**（脚本无法代劳）。跳过收尾：**`SKIP_AUTO_POST=1`**。
 
 ### 4. 仅命令行安装（高级）
 
@@ -65,7 +65,7 @@ sudo INSTALL_WEB=both bash install/install-web.sh
 # 自定义路径: sudo MAINSAIL_DIR=/path FLUIDD_DIR=/path INSTALL_WEB=both bash install/install-web.sh
 ```
 
-一键 **`install.sh`**：在装 Klipper 插件前会**自动**运行 **`install/ensure-psutil.sh`**（缺 psutil 时，优先 **`vendor/psutil`** 离线 wheel）；跳过可设 **`SKIP_ENSURE_PSUTIL=1`**。若你选择 **同时部署 Mainsail+Fluidd**（`y`）且成功，会**自动生成并启用** nginx 双 UI（**`PLR_NGINX_ENABLE=1`**）；若不想跑 nginx 可设 **`SKIP_NGINX_DUAL_UI=1`**。
+一键 **`install.sh`**：在装 Klipper 插件前会**自动**运行 **`install/ensure-psutil.sh`**（缺 psutil 时，优先 **`vendor/psutil`** 离线 wheel）。若你选择 **同时部署 Mainsail+Fluidd**（`y`）且成功，会**自动生成并启用** nginx 双 UI（**`PLR_NGINX_ENABLE=1`**）；若不想跑 nginx 可设 **`SKIP_NGINX_DUAL_UI=1`**。
 
 ### 5. 打印机配置（`install.sh` 已尽量自动完成）
 

@@ -88,15 +88,11 @@ fi
 # --- psutil：必须与 Klipper 实际使用的 Python 一致（KIAUH 常见为 ~/klipper/venv；仓库 vendor/psutil 可离线安装）---
 KPY="$(detect_klipper_python)" || die "无法找到 python3，请先安装 Python3。"
 echo "==> Klipper 使用的 Python（用于检查 psutil）: $KPY"
-if [[ "${SKIP_ENSURE_PSUTIL:-}" == "1" ]]; then
-  echo "已设置 SKIP_ENSURE_PSUTIL=1，跳过 ensure-psutil（请自行保证 psutil 已装入该 Python）。"
-else
-  if ! "$KPY" -c "import psutil" 2>/dev/null; then
-    echo "==> 未检测到 psutil，自动执行 install/ensure-psutil.sh（优先 vendor/psutil 离线 wheel）…"
-    bash "${INST}/ensure-psutil.sh" || die "psutil 安装失败，请见 README"
-  fi
-  "$KPY" -c "import psutil" 2>/dev/null || die "psutil 仍不可用，请执行: bash install/ensure-psutil.sh"
+if ! "$KPY" -c "import psutil" 2>/dev/null; then
+  echo "==> 未检测到 psutil，自动执行 install/ensure-psutil.sh（优先 vendor/psutil 离线 wheel）…"
+  bash "${INST}/ensure-psutil.sh" || die "psutil 安装失败，请见 README"
 fi
+"$KPY" -c "import psutil" 2>/dev/null || die "psutil 仍不可用，请执行: bash install/ensure-psutil.sh"
 
 echo ""
 echo ">>> 正在安装 Klipper 插件 …"
