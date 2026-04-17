@@ -35,27 +35,6 @@ echo ""
 echo "======== Klipper 断电续打（PLR）交互安装 ========"
 echo ""
 
-# --- 依赖 psutil ---
-if ! command -v python3 >/dev/null; then
-  die "未找到 python3，请先安装。"
-fi
-
-if ! python3 -c "import psutil" 2>/dev/null; then
-  echo "未检测到 Python 模块 psutil（Klipper 续打需要）。"
-  _ps="$(read_yesno "是否使用 apt 安装 python3-psutil？[Y/n] ")"
-  if [[ -z "${_ps}" ]] || [[ "${_ps}" == [Yy]* ]]; then
-    if command -v apt-get >/dev/null; then
-      apt-get update -qq && apt-get install -y python3-psutil
-    else
-      echo "当前系统无 apt-get，请手动执行: pip3 install psutil（与 Klipper 所用 Python 一致）"
-      exit 1
-    fi
-  else
-    die "请先安装 psutil 后重新运行本脚本。"
-  fi
-fi
-python3 -c "import psutil" 2>/dev/null || die "psutil 仍不可用，请检查后重试。"
-
 # --- Klipper / printer_data 路径 ---
 KH=""
 PD=""
@@ -104,6 +83,32 @@ if [[ -n "${PRINTER_DATA:-}" ]]; then
 else
   unset PRINTER_DATA
 fi
+
+# --- psutil：必须与 Klipper 实际使用的 Python 一致（KIAUH 常见为 ~/klipper/venv，仅 apt 装系统包不够）---
+KPY="$(detect_klipper_python)" || die "无法找到 python3，请先安装 Python3。"
+echo "==> Klipper 使用的 Python（用于检查 psutil）: $KPY"
+if ! "$KPY" -c "import psutil" 2>/dev/null; then
+  echo "未在「上述」解释器中找到 psutil；Klipper 启动时会报 No module named 'psutil'。"
+  _ps="$(read_yesno "是否自动安装 psutil 到该 Python？[Y/n] ")"
+  if [[ -z "${_ps}" ]] || [[ "${_ps}" == [Yy]* ]]; then
+    if [[ "$KPY" == *"/venv/bin/python"* ]] || [[ "$KPY" == *"/.venv/bin/python"* ]]; then
+      if [[ -n "${SUDO_USER:-}" ]]; then
+        sudo -u "${SUDO_USER}" -- "$KPY" -m pip install psutil
+      else
+        "$KPY" -m pip install psutil
+      fi
+    else
+      if command -v apt-get >/dev/null; then
+        apt-get update -qq && apt-get install -y python3-psutil
+      else
+        "$KPY" -m pip install psutil
+      fi
+    fi
+  else
+    die "请先安装: $KPY -m pip install psutil"
+  fi
+fi
+"$KPY" -c "import psutil" 2>/dev/null || die "psutil 仍不可用，请手动执行: $KPY -m pip install psutil"
 
 echo ""
 echo ">>> 正在安装 Klipper 插件 …"

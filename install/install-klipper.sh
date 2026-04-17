@@ -34,9 +34,12 @@ CFG_DIR=""
 [[ -d "$EXTRAS" ]] || die "无效 KLIPPER_HOME: $KLIPPER_HOME（缺少 klippy/extras）"
 [[ -d "$BUNDLE/klippy/extras" ]] || die "缺少本仓库内 klipper/klippy/extras（请在克隆/解压后的仓库根目录执行）"
 
-command -v python3 >/dev/null || die "需要 python3"
-python3 -c "import psutil" 2>/dev/null || {
-  echo "缺少 Python 模块 psutil：pip3 install psutil 或 apt install python3-psutil"
+KPY="$(detect_klipper_python)" || die "无法找到 Klipper 使用的 Python（需 python3 或 \$KLIPPER_HOME/venv/bin/python）"
+echo "==> Klipper Python: $KPY"
+"$KPY" -c "import psutil" 2>/dev/null || {
+  echo "错误: 在 $KPY 中未找到 psutil（Klipper 与系统 python3 可能不是同一个环境）。"
+  echo "请执行: $KPY -m pip install psutil"
+  echo "或（若 Klipper 用系统 python3）: sudo apt install python3-psutil"
   exit 1
 }
 

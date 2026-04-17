@@ -65,6 +65,26 @@ detect_klipperscreen_home() {
   return 1
 }
 
+# Klipper 实际使用的 Python（KIAUH 等常为 ~/klipper/venv/bin/python，与系统 python3 不同）
+detect_klipper_python() {
+  local kh="${KLIPPER_HOME:-}"
+  if [[ -n "$kh" ]]; then
+    if [[ -x "${kh}/venv/bin/python" ]]; then
+      echo "${kh}/venv/bin/python"
+      return 0
+    fi
+    if [[ -x "${kh}/.venv/bin/python" ]]; then
+      echo "${kh}/.venv/bin/python"
+      return 0
+    fi
+  fi
+  if command -v python3 >/dev/null 2>&1; then
+    command -v python3
+    return 0
+  fi
+  return 1
+}
+
 # 探测 Mainsail 静态根目录（须含 index.html）
 detect_mainsail_dir() {
   local d EH

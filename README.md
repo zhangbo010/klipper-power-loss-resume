@@ -88,6 +88,32 @@ sudo bash install/post-setup.sh /home/你的用户/printer_data yes
 
 本仓库含 **`web/mainsail`**、**`web/fluidd`**。交互安装会询问是否部署；部署后请在浏览器 **Ctrl+F5** 强刷缓存。若使用上游官方前端且未替换，可参考 `docs/SKILL.md`。
 
+### 故障排除：`No module named 'psutil'`
+
+定制版 **`virtual_sdcard.py`** 依赖 **`psutil`**，且必须与 **Klipper 实际使用的 Python** 一致。若只用系统包安装了 **`python3-psutil`**，而 Klipper 运行在 **`~/klipper/venv`** 里，仍会报错。
+
+**处理：**
+
+```bash
+# 查看 Klipper 用的 Python（常见为 venv）
+grep ExecStart /etc/systemd/system/klipper.service
+# 或
+ls ~/klipper/venv/bin/python
+
+# 把 psutil 装进该解释器（推荐）
+~/klipper/venv/bin/python -m pip install psutil
+sudo systemctl restart klipper
+```
+
+或在仓库根目录执行（会自动探测 `KLIPPER_HOME`）：
+
+```bash
+bash install/ensure-psutil.sh
+sudo systemctl restart klipper
+```
+
+在网页或控制台执行 **`FIRMWARE_RESTART`** / **`RESTART`** 重新加载。
+
 ---
 
 ## 仓库目录说明（终端用户）
@@ -98,7 +124,7 @@ sudo bash install/post-setup.sh /home/你的用户/printer_data yes
 | `klipperscreen/` | KlipperScreen 相关补丁 |
 | `config/` | `plr.cfg.example` |
 | `install.sh` | **交互安装入口**（Klipper + 可选 KS + 可选 Web） |
-| `install/` | `common.sh`、`install-klipper.sh`、`install-klipperscreen.sh`、`install-web.sh`、`post-setup.sh` |
+| `install/` | `install-*.sh`、`post-setup.sh`、`ensure-psutil.sh`（psutil 排错） |
 | `web/mainsail`、`web/fluidd` | 定制前端静态资源（PLR 弹窗） |
 
 **Moonraker** 无需补丁。
