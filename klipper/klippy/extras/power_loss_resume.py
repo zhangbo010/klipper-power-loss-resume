@@ -261,8 +261,24 @@ class PowerLossResume:
         else:
             self.power_loss_info = None
 
+    def _printer_is_printing(self):
+        """判断是否在打印/暂停；不依赖 Printer._is_printing（上游 Klipper 可能无此方法）。"""
+        eventtime = self.reactor.monotonic()
+        ps = self.print_stats.get_status(eventtime)
+        if ps["state"] in ("printing", "paused"):
+            return True
+        idle_timeout = self.printer.lookup_object("idle_timeout", None)
+        if idle_timeout is not None:
+            if idle_timeout.get_status(eventtime)["state"] == "Printing":
+                return True
+        return False
+
+    def _printer_is_paused(self):
+        eventtime = self.reactor.monotonic()
+        return self.print_stats.get_status(eventtime)["state"] == "paused"
+
     def _save_power_loss_info(self, is_power_loss=True):
-        if is_power_loss and self.printer._is_printing():
+        if is_power_loss and self._printer_is_printing():
             eventtime = self.reactor.monotonic()
             # 获取所有温度
             heaters = {}
@@ -306,7 +322,7 @@ class PowerLossResume:
             # 生成数据
             self.power_loss_info = {
                 "power_loss_resume": True,
-                "is_paused": self.printer._is_paused(),
+                "is_paused": self._printer_is_paused(),
                 "file_path": self.virtual_sdcard.file_path(),
                 "progress": self.virtual_sdcard.progress(),
                 "is_active": self.virtual_sdcard.is_active(),
