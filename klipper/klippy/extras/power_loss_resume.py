@@ -9,6 +9,19 @@ import os, logging, io
 INFO_FILE = ".power_loss_recover.json"
 
 
+def _sanitize_for_json(obj):
+    """将 NaN/Inf 等转为 None，避免 json.dump 抛 ValueError。"""
+    if isinstance(obj, float):
+        if obj != obj or obj in (float("inf"), float("-inf")):
+            return None
+        return obj
+    if isinstance(obj, dict):
+        return {k: _sanitize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_sanitize_for_json(v) for v in obj]
+    return obj
+
+
 class PowerLossResume:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -231,6 +244,12 @@ class PowerLossResume:
             self.power_loss_info = None
 
     def _save_power_loss_info(self, is_power_loss=True):
+        try:
+            self._save_power_loss_info_impl(is_power_loss)
+        except Exception:
+            logging.exception("power_loss_resume: snapshot save failed (ignored)")
+
+    def _save_power_loss_info_impl(self, is_power_loss=True):
         if is_power_loss and self.printer._is_printing():
             eventtime = self.reactor.monotonic()
             # 获取所有温度
@@ -294,9 +313,9 @@ class PowerLossResume:
             }
         else:
             self.power_loss_info = {"power_loss_resume": False}
-        logging.info(json.dumps(self.power_loss_info, indent=4))
         with open(self.sdcard_dirname, "w") as file:
-            json.dump(self.power_loss_info, file)
+            safe = _sanitize_for_json(self.power_loss_info)
+            json.dump(safe, file, default=str)
             os.fsync(file.fileno())
 
     def _shutdown(self):
