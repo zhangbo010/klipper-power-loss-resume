@@ -56,7 +56,7 @@ sudo INSTALL_WEB=both bash install/install-web.sh
 sudo PRINTER_DATA=/path/to/printer_data bash install/post-setup.sh
 ```
 
-交互 **`install.sh`**：选 **同时部署** Mainsail+Fluidd 且成功后，会自动执行 **`install-nginx-dual-ui.sh`** 生成配置并询问是否启用；跳过可加 **`SKIP_NGINX_DUAL_UI=1`**。
+交互 **`install.sh`**：选 **同时部署** Mainsail+Fluidd 且成功后，会自动 **`PLR_NGINX_ENABLE=1`** 执行 **`install-nginx-dual-ui.sh`**（生成、移出冲突旧站点、启用并 reload）；跳过可加 **`SKIP_NGINX_DUAL_UI=1`**。
 
 ### 5. 打印机配置
 

@@ -196,18 +196,15 @@ else
   echo "（未找到 web/mainsail 或 web/fluidd，已跳过网页部署。完整克隆仓库后重试。）"
 fi
 
-# 两者都部署成功且仓库含双端静态文件时，自动生成 nginx 双 UI 配置（/m/、/f/）
+# 两者都部署成功且仓库含双端静态文件时：生成 plr nginx 配置、移出冲突旧站点、写入 sites-enabled 并 reload
 if [[ "${SKIP_NGINX_DUAL_UI:-}" != "1" ]] && [[ -f "${ROOT}/install/install-nginx-dual-ui.sh" ]]; then
   if [[ "${_web}" == [yY]* ]] && [[ "$WEB_BOTH_OK" == "1" ]] && [[ -f "$WEB_MS" && -f "$WEB_FD" ]]; then
     echo ""
-    echo ">>> 生成 nginx 双 UI 配置（http://IP/m/ 与 /f/）…"
-    if bash "${INST}/install-nginx-dual-ui.sh"; then
-      _ng="$(read_yesno "是否启用上述配置并 reload nginx（若本机已有 listen 80 的旧站点，请先备份/禁用以免冲突）？[y/N] ")"
-      if [[ "${_ng}" == [yY]* ]]; then
-        PLR_NGINX_ENABLE=1 bash "${INST}/install-nginx-dual-ui.sh" || echo "提示: 启用失败时可稍后: sudo PLR_NGINX_ENABLE=1 bash install/install-nginx-dual-ui.sh"
-      fi
+    echo ">>> 生成并启用 nginx 双 UI（http://IP/m/ 与 /f/），并处理旧站点冲突…"
+    if PLR_NGINX_ENABLE=1 bash "${INST}/install-nginx-dual-ui.sh"; then
+      :
     else
-      echo "提示: 可稍后执行: sudo bash install/install-nginx-dual-ui.sh（见 docs/nginx-generic/README.md）"
+      echo "提示: 可稍后手动执行: sudo PLR_NGINX_ENABLE=1 bash install/install-nginx-dual-ui.sh（见 docs/nginx-generic/README.md）"
     fi
   fi
 fi

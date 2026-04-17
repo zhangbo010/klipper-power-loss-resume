@@ -74,7 +74,7 @@ sudo INSTALL_WEB=both bash install/install-web.sh
 # 自定义路径: sudo MAINSAIL_DIR=/path FLUIDD_DIR=/path INSTALL_WEB=both bash install/install-web.sh
 ```
 
-一键 **`install.sh`**：若你选择 **同时部署 Mainsail+Fluidd**（`y`）且成功，会**自动生成** `install-nginx-dual-ui.sh` 的 nginx 配置，并询问是否 **启用并 reload**；若不想跑 nginx 步骤可设 **`SKIP_NGINX_DUAL_UI=1`**。
+一键 **`install.sh`**：若你选择 **同时部署 Mainsail+Fluidd**（`y`）且成功，会**自动生成并启用** nginx 双 UI（**`PLR_NGINX_ENABLE=1`**，含移出占用 80/9080/9081 的旧站点与 **reload**）；若不想跑 nginx 步骤可设 **`SKIP_NGINX_DUAL_UI=1`**。
 
 ### 5. 打印机配置（`install.sh` 已尽量自动完成）
 
