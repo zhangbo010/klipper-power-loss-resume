@@ -41,7 +41,7 @@ sudo bash install/install-nginx-dual-ui.sh
 1. 用 **`detect_mainsail_dir` / `detect_fluidd_dir`**（与 `install-web.sh` 同源）解析静态根目录；  
 2. 用 **`detect_moonraker_port`** 解析 Moonraker HTTP 端口；  
 3. 从 **`install/nginx-templates/`** 生成 **`/etc/nginx/sites-available/plr-*.conf`**；  
-4. 执行 **`nginx -t`**；若设置 **`PLR_NGINX_ENABLE=1`** 则建立 **`sites-enabled`** 软链并 **`reload`**。
+4. 执行 **`nginx -t`**；若设置 **`PLR_NGINX_ENABLE=1`** 则先**自动处理旧站点**（见下），再建立 **`sites-enabled`** 软链并 **`reload`**。
 
 **环境变量（可选）**
 
@@ -54,11 +54,19 @@ sudo bash install/install-nginx-dual-ui.sh
 | `PLR_DEFAULT_UI` | 80 默认首页指向 `fluidd` 或 `mainsail` | `fluidd` |
 | `MOONRAKER_PORT` | 若自动解析失败可手动指定 | `7125` |
 | `PLR_NGINX_ENABLE` | 设为 `1` 时启用站点并 reload | 仅生成，不启用 |
+| `PLR_SKIP_DISABLE_CONFLICTING` | 设为 `1` 时不移出旧站点（与旧配置并存时自行负责） | 自动移出 |
 
-**与已有「单站 Fluidd 占 80」并存**：若当前 **`sites-enabled`** 里已有 **`listen 80`** 的 Fluidd，**不要**在未备份的情况下重复启用两个 default server。可选做法：
+### 与旧网页端、端口冲突（`PLR_NGINX_ENABLE=1` 时）
 
-- **备份**后改用本脚本生成的 **`plr-gateway-80.conf`**（仅反代、无静态 `root`），并**禁用**旧的全站 `fluidd` 配置；或  
-- 手工把 **`port80-gateway`** 里的 **`location /m/`、`/f/`** 合并进你现有 **`server { listen 80; ... }`**（进阶，需懂 nginx 优先级）。
+启用 PLR 前会占用 **`80`**（网关）、**`PLR_FLUIDD_PORT`**（默认 9080）、**`PLR_MAINSAIL_PORT`**（默认 9081）。若本机已有 KIAUH 等 nginx 站点监听这些端口，**`install/nginx-disable-conflicting-sites.sh`** 会：
+
+- 扫描 **`/etc/nginx/sites-enabled/`**（排除 **`plr-*`**），解析各站点配置中的 **`listen`**；  
+- 若 **python3** 可用，解析 `listen` 行，仅当端口为 **80 / 9080 / 9081**（或与当前 **`PLR_*_PORT`** 一致）时，将该站点软链**移入** **`sites-enabled/.plr-disabled-时间戳/`** 备份；  
+- 若无 **python3**，仅按**文件名** `default`、`fluidd`、`mainsail` 做保守移出（建议安装 `python3` 后重跑）。
+
+**非 nginx** 占用 80（如其它进程）时，脚本**不会**结束该进程，需自行处理；**Moonraker 7125** 不受影响。
+
+恢复旧站：将备份目录中的软链移回 **`sites-enabled/`**，再 **`nginx -t`** 与 **`reload`**。
 
 ---
 

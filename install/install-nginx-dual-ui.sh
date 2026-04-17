@@ -96,20 +96,30 @@ echo ""
 
 ENABLE="${PLR_NGINX_ENABLE:-}"
 if [[ "$ENABLE" == "1" ]]; then
+  export PLR_HTTP_PORT=80
+  export PLR_FLUIDD_PORT="$FLUIDD_PORT"
+  export PLR_MAINSAIL_PORT="$MAINSAIL_PORT"
+  # shellcheck source=nginx-disable-conflicting-sites.sh
+  source "${SCRIPT_DIR}/nginx-disable-conflicting-sites.sh"
+  echo ""
+  echo ">>> 检查并暂时移出占用 ${PLR_HTTP_PORT}/${PLR_FLUIDD_PORT}/${PLR_MAINSAIL_PORT} 的旧 nginx 站点（备份在 sites-enabled/.plr-disabled-*）…"
+  plr_disable_conflicting_nginx_sites
+  echo ""
   ln -sf "${OUTD}/plr-backend-fluidd.conf" /etc/nginx/sites-enabled/plr-backend-fluidd.conf
   ln -sf "${OUTD}/plr-backend-mainsail.conf" /etc/nginx/sites-enabled/plr-backend-mainsail.conf
   ln -sf "${OUTD}/plr-gateway-80.conf" /etc/nginx/sites-enabled/plr-gateway-80.conf
-  echo "已写入 sites-enabled。若本机已有其它 listen 80 的旧 Fluidd 配置，请先禁用以免冲突。"
+  echo "已写入 sites-enabled（plr-*）。"
   nginx -t
   systemctl reload nginx
   echo "nginx 已 reload。"
 else
   echo "未写入 sites-enabled（未设置 PLR_NGINX_ENABLE=1）。启用前请："
-  echo "  1) 备份并禁用当前「单站 Fluidd/Mainsail 占 80」的旧配置，避免两个 default_server 冲突；"
-  echo "  2) sudo ln -sf ${OUTD}/plr-backend-fluidd.conf /etc/nginx/sites-enabled/"
+  echo "  1) 设置 PLR_NGINX_ENABLE=1 重跑本脚本时，会自动移出占用 80/9080/9081 的旧站点（见 install/nginx-disable-conflicting-sites.sh）；"
+  echo "  2) 或手动备份并禁用当前「单站 Fluidd/Mainsail 占 80」的旧配置；"
+  echo "  3) sudo ln -sf ${OUTD}/plr-backend-fluidd.conf /etc/nginx/sites-enabled/"
   echo "     sudo ln -sf ${OUTD}/plr-backend-mainsail.conf /etc/nginx/sites-enabled/"
   echo "     sudo ln -sf ${OUTD}/plr-gateway-80.conf /etc/nginx/sites-enabled/"
-  echo "  3) sudo nginx -t && sudo systemctl reload nginx"
+  echo "  4) sudo nginx -t && sudo systemctl reload nginx"
   echo ""
   echo "说明见: docs/nginx-generic/README.md"
 fi

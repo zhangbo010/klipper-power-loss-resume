@@ -133,7 +133,7 @@ sudo systemctl restart klipper
 | `config/` | `plr.cfg.example` |
 | `VERSION` | **发行版本号**（单行，与下文「当前版本」同步） |
 | `install.sh` | **交互安装入口**（Klipper + 可选 KS + 可选 Web） |
-| `install/` | `install-*.sh`、`post-setup.sh`、`ensure-psutil.sh`、`diagnose-web-ui.sh`、`install-nginx-dual-ui.sh`、`nginx-templates/` |
+| `install/` | `install-*.sh`、`post-setup.sh`、`ensure-psutil.sh`、`diagnose-web-ui.sh`、`install-nginx-dual-ui.sh`、`nginx-disable-conflicting-sites.sh`、`nginx-templates/` |
 | `docs/nginx-generic/` | 双 UI 通用 nginx 原理与 **`install-nginx-dual-ui.sh`** |
 | `docs/nginx-flyos/` | FlyOS 原始片段对照 |
 | `web/mainsail`、`web/fluidd` | 定制前端静态资源（PLR 弹窗） |

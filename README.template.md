@@ -76,7 +76,7 @@ sudo PRINTER_DATA=/path/to/printer_data bash install/post-setup.sh
 | `klipperscreen/` | `screen.py`、`panels/main_menu.py`（PLR 相关改动） |
 | `config/` | `plr.cfg.example` |
 | `install.sh` | **交互安装入口**（Klipper + 可选 KS + Web） |
-| `install/` | `common.sh`、`install-*.sh`、`post-setup.sh`、`diagnose-web-ui.sh`、`install-nginx-dual-ui.sh`、`nginx-templates/` |
+| `install/` | `common.sh`、`install-*.sh`、`post-setup.sh`、`diagnose-web-ui.sh`、`install-nginx-dual-ui.sh`、`nginx-disable-conflicting-sites.sh`、`nginx-templates/` |
 | `docs/` | 功能说明；**`nginx-generic/`** 双 UI 通用部署；**`nginx-flyos/`** FlyOS 片段对照 |
 | `web/mainsail`、`web/fluidd` | 定制前端静态资源 |
 
