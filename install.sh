@@ -107,7 +107,12 @@ fi
 
 echo ""
 echo ">>> 正在安装 Klipper 插件 …"
-bash "${INST}/install-klipper.sh"
+# 以实际登录用户执行复制，避免 sudo 下 root 无法读取 NFS home（root_squash）导致静默失败
+if [[ -n "${SUDO_USER:-}" ]]; then
+  sudo -u "${SUDO_USER}" env KLIPPER_HOME="${KLIPPER_HOME}" PRINTER_DATA="${PRINTER_DATA:-}" bash "${INST}/install-klipper.sh"
+else
+  bash "${INST}/install-klipper.sh"
+fi
 
 echo ""
 echo ">>> Klipper 插件已写入。接下来为可选步骤（KlipperScreen / 网页端）。"
@@ -146,7 +151,11 @@ if [[ "${_ks}" == [yY]* ]]; then
   [[ -f "${KLIPPERSCREEN_HOME}/screen.py" ]] || die "无效的 KLIPPERSCREEN_HOME: $KLIPPERSCREEN_HOME"
   echo ""
   echo ">>> 正在安装 KlipperScreen 补丁 …"
-  bash "${INST}/install-klipperscreen.sh"
+  if [[ -n "${SUDO_USER:-}" ]]; then
+    sudo -u "${SUDO_USER}" env KLIPPERSCREEN_HOME="${KLIPPERSCREEN_HOME}" bash "${INST}/install-klipperscreen.sh"
+  else
+    bash "${INST}/install-klipperscreen.sh"
+  fi
 fi
 
 # --- 可选：Mainsail / Fluidd（定制 PLR 弹窗）---

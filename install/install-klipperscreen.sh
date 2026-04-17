@@ -13,8 +13,6 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 die() { echo "错误: $*" >&2; exit 1; }
 
-[[ "$(id -u)" -eq 0 ]] || die "请使用 sudo 运行"
-
 if [[ -z "${KLIPPERSCREEN_HOME:-}" ]]; then
   KS="$(detect_klipperscreen_home)" || die "未找到 KlipperScreen。请设置 KLIPPERSCREEN_HOME 为安装目录（含 screen.py、panels/）"
 else
@@ -26,12 +24,28 @@ fi
 echo "==> KLIPPERSCREEN_HOME=$KS"
 
 TS="$(date +%Y%m%d%H%M%S)"
+run_copy() {
+  local src="$1" dst="$2"
+  if [[ -n "${SUDO_USER:-}" ]] && [[ "$(id -u)" -eq 0 ]] && id -u "${SUDO_USER}" &>/dev/null; then
+    if sudo -u "${SUDO_USER}" -- cp -a "$src" "$dst" 2>/dev/null; then
+      return 0
+    fi
+  fi
+  cp -a "$src" "$dst" || die "复制失败: $src -> $dst"
+}
 for f in screen.py panels/main_menu.py; do
   src="${REPO_ROOT}/klipperscreen/${f}"
   dst="${KS}/${f}"
   [[ -f "$src" ]] || die "缺少源文件: $src（请在克隆/解压后的本仓库根目录执行）"
-  [[ -f "$dst" ]] && cp -a "$dst" "${dst}.bak.${TS}"
-  install -m 0644 "$src" "$dst"
+  if [[ -f "$dst" ]]; then
+    echo "==> 备份 ${dst}.bak.${TS}"
+    if [[ -n "${SUDO_USER:-}" ]] && [[ "$(id -u)" -eq 0 ]] && id -u "${SUDO_USER}" &>/dev/null; then
+      sudo -u "${SUDO_USER}" -- cp -a "$dst" "${dst}.bak.${TS}" 2>/dev/null || cp -a "$dst" "${dst}.bak.${TS}" || die "备份失败"
+    else
+      cp -a "$dst" "${dst}.bak.${TS}" || die "备份失败"
+    fi
+  fi
+  run_copy "$src" "$dst"
   echo "已安装: $dst"
 done
 
