@@ -116,6 +116,28 @@ detect_mainsail_dir() {
   return 1
 }
 
+# 从 printer_data 下 moonraker.conf 的 [server] 段读取 port（默认 7125）
+detect_moonraker_port() {
+  local pd cf port
+  pd="${PRINTER_DATA:-}"
+  [[ -z "$pd" ]] && pd="$(detect_printer_data || true)"
+  [[ -z "$pd" ]] && return 1
+  cf="${pd}/config/moonraker.conf"
+  [[ -f "$cf" ]] || return 1
+  port="$(awk '
+    /^\[server\]/ { s=1; next }
+    /^\[/ { s=0; next }
+    s && /^[[:space:]]*port:[[:space:]]*[0-9]+/ {
+      match($0, /[0-9]+/)
+      print substr($0, RSTART, RLENGTH)
+      exit
+    }
+  ' "$cf")"
+  [[ -n "$port" ]] || return 1
+  echo "$port"
+  return 0
+}
+
 # 探测 Fluidd 静态根目录（须含 index.html）
 detect_fluidd_dir() {
   local d EH

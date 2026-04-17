@@ -190,6 +190,13 @@ else
   echo "（未找到 web/mainsail 或 web/fluidd，已跳过网页部署。完整克隆仓库后重试。）"
 fi
 
+if [[ -f "${ROOT}/install/install-nginx-dual-ui.sh" ]]; then
+  echo ""
+  echo "提示：若需同机使用 http://IP/m/ 与 /f/，在部署静态文件后可执行:"
+  echo "  sudo bash install/install-nginx-dual-ui.sh"
+  echo "  说明见 docs/nginx-generic/README.md"
+fi
+
 echo ""
 echo "======== 自动完成配置与重启 ========"
 if [[ "${SKIP_AUTO_POST:-}" == "1" ]]; then

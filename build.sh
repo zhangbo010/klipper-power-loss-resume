@@ -46,8 +46,9 @@ fi
 cp -a "$SCRIPT_DIR/install/common.sh" "$SCRIPT_DIR/install/install-klipper.sh" \
   "$SCRIPT_DIR/install/install-klipperscreen.sh" "$SCRIPT_DIR/install/install-web.sh" \
   "$SCRIPT_DIR/install/post-setup.sh" "$SCRIPT_DIR/install/ensure-psutil.sh" \
-  "$SCRIPT_DIR/install/diagnose-web-ui.sh" "$OUT_DIR/install/"
+  "$SCRIPT_DIR/install/diagnose-web-ui.sh" "$SCRIPT_DIR/install/install-nginx-dual-ui.sh" "$OUT_DIR/install/"
 cp -a "$SCRIPT_DIR/install.sh" "$OUT_DIR/install.sh"
+[[ -d "$SCRIPT_DIR/install/nginx-templates" ]] && cp -a "$SCRIPT_DIR/install/nginx-templates" "$OUT_DIR/install/"
 chmod +x "$OUT_DIR/install.sh" "$OUT_DIR/install/"*.sh
 
 if [[ -f "$SCRIPT_DIR/docs/SKILL.md" ]]; then
@@ -58,6 +59,10 @@ fi
 if [[ -d "$SCRIPT_DIR/docs/nginx-flyos" ]]; then
   mkdir -p "$OUT_DIR/docs/nginx-flyos"
   cp -a "$SCRIPT_DIR/docs/nginx-flyos/." "$OUT_DIR/docs/nginx-flyos/"
+fi
+if [[ -d "$SCRIPT_DIR/docs/nginx-generic" ]]; then
+  mkdir -p "$OUT_DIR/docs/nginx-generic"
+  cp -a "$SCRIPT_DIR/docs/nginx-generic/." "$OUT_DIR/docs/nginx-generic/"
 fi
 
 GEN="$(date '+%Y-%m-%d %H:%M:%S')"

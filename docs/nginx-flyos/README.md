@@ -1,5 +1,7 @@
 # FlyOS 风格：Fluidd / Mainsail 同机切换（`/f/`、`/m/`）
 
+**标准 Klipper 主机（KIAUH 等）**：优先使用 **`docs/nginx-generic/README.md`** 与 **`install/install-nginx-dual-ui.sh`**，按 **`~/mainsail`、`~/fluidd`** 与 Moonraker 端口生成配置；本目录为 FlyOS rootfs **原始片段**对照。
+
 ## 原理（与 FlyOS rootfs 一致）
 
 1. **两个独立静态站点**（各用一个端口，根路径即 UI）  

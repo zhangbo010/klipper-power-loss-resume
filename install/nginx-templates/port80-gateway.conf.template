@@ -1,0 +1,65 @@
+# PLR 通用：仅 80 分流，无静态 root（由 install-nginx-dual-ui.sh 生成）
+# /f/、/fluidd/ → Fluidd 后端 __FLUIDD_BACKEND_PORT__ ；/m/、/mainsail/ → Mainsail 后端 __MAINSAIL_BACKEND_PORT__
+# 默认 / → __DEFAULT_BACKEND_PORT__（与 PLR_DEFAULT_UI 一致）
+
+server {
+    listen 80;
+
+    client_max_body_size 0;
+    proxy_request_buffering off;
+
+    location = /m { return 301 /m/; }
+    location = /f { return 301 /f/; }
+    location = /fluidd { return 301 /fluidd/; }
+    location = /mainsail { return 301 /mainsail/; }
+
+    location /f/ {
+        proxy_pass http://127.0.0.1:__FLUIDD_BACKEND_PORT__/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /fluidd/ {
+        proxy_pass http://127.0.0.1:__FLUIDD_BACKEND_PORT__/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /m/ {
+        proxy_pass http://127.0.0.1:__MAINSAIL_BACKEND_PORT__/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /mainsail/ {
+        proxy_pass http://127.0.0.1:__MAINSAIL_BACKEND_PORT__/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:__DEFAULT_BACKEND_PORT__/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}

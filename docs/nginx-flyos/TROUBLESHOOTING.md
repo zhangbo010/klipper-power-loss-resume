@@ -1,5 +1,7 @@
 # `/m/` 打不开 Mainsail — 排障
 
+**推荐**：在常见 Klipper 目录布局下，用 **`sudo bash install/install-nginx-dual-ui.sh`** 生成 **`plr-backend-*`** 与 **`plr-gateway-80.conf`**，见 **`docs/nginx-generic/README.md`**。
+
 ## 先确认：你是不是「只有 Moonraker / 单端口」？
 
 很多 **KIAUH / MainsailOS** 环境是：**80 或 81 端口上只有一个网页根**（例如只挂 **Mainsail**），**没有** FlyOS 这种：

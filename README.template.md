@@ -62,7 +62,7 @@ sudo PRINTER_DATA=/path/to/printer_data bash install/post-setup.sh
 
 ### 6. 网页端
 
-本仓库含 **`web/mainsail`**、**`web/fluidd`**。交互 **`install.sh`** 会询问是否部署；**`/m/`、`/f/` 同机切换**需按 FlyOS 方式配置 **nginx（或 Caddy）**，见 **`docs/nginx-flyos/README.md`**。部署后强刷浏览器缓存。若 **`/m/` 打不开**，见 **`docs/nginx-flyos/TROUBLESHOOTING.md`**，或运行 **`bash install/diagnose-web-ui.sh`**；已启用 **9081** 时可先试 **`http://IP:9081/`**。
+本仓库含 **`web/mainsail`**、**`web/fluidd`**。交互 **`install.sh`** 会询问是否部署；**`/m/`、`/f/` 同机切换**见 **`docs/nginx-generic/README.md`**，并执行 **`sudo bash install/install-nginx-dual-ui.sh`**（按本机目录与 Moonraker 端口生成 nginx）。FlyOS 片段对照见 **`docs/nginx-flyos/`**。部署后强刷浏览器缓存。若 **`/m/` 打不开**，见 **`docs/nginx-flyos/TROUBLESHOOTING.md`**，或运行 **`bash install/diagnose-web-ui.sh`**；已启用 Mainsail 后端端口时可先试 **`http://IP:9081/`**（若改过 **`PLR_MAINSAIL_PORT`** 则用对应端口）。
 
 ---
 
@@ -74,8 +74,8 @@ sudo PRINTER_DATA=/path/to/printer_data bash install/post-setup.sh
 | `klipperscreen/` | `screen.py`、`panels/main_menu.py`（PLR 相关改动） |
 | `config/` | `plr.cfg.example` |
 | `install.sh` | **交互安装入口**（Klipper + 可选 KS + Web） |
-| `install/` | `common.sh`、`install-*.sh`、`post-setup.sh`、`diagnose-web-ui.sh` |
-| `docs/` | 功能说明（Skill 摘要） |
+| `install/` | `common.sh`、`install-*.sh`、`post-setup.sh`、`diagnose-web-ui.sh`、`install-nginx-dual-ui.sh`、`nginx-templates/` |
+| `docs/` | 功能说明；**`nginx-generic/`** 双 UI 通用部署；**`nginx-flyos/`** FlyOS 片段对照 |
 | `web/mainsail`、`web/fluidd` | 定制前端静态资源 |
 
 **Moonraker** 无需补丁。

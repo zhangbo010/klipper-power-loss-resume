@@ -98,5 +98,5 @@ fi
 echo ""
 echo "完成。请刷新浏览器缓存；若网页异常可恢复上述 .bak.* 目录。"
 echo ""
-echo "说明：若需与 FlyOS 相同，用 http://IP/m/ 访问 Mainsail、/f/ 访问 Fluidd，"
-echo "      除静态文件外还须配置 nginx：见仓库 docs/nginx-flyos/README.md"
+echo "说明：若需 http://IP/m/ 与 /f/ 同机切换，除静态文件外还须 nginx 双后端 + 80 分流："
+echo "      sudo bash install/install-nginx-dual-ui.sh（见 docs/nginx-generic/README.md）"

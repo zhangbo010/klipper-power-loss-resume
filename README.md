@@ -90,9 +90,9 @@ sudo bash install/post-setup.sh /home/你的用户/printer_data yes
 
 本仓库含 **`web/mainsail`**、**`web/fluidd`**。交互安装会询问是否部署；部署后请在浏览器 **Ctrl+F5** 强刷缓存。
 
-**`/m/` 与 `/f/` 同机切换（FlyOS 方式）**：仅覆盖静态文件**不够**；需要 **80 端口** 把 `/m/`、`/f/` 分别反代到 **9081 / 9080**，且 **9080、9081** 各有一个 **nginx** `server` 提供对应静态文件与 Moonraker 转发。详见 **`docs/nginx-flyos/README.md`** 及其中示例配置。若使用上游官方前端且未替换，可参考 `docs/SKILL.md`。
+**`/m/` 与 `/f/` 同机切换**：原理是「两个独立 UI 后端端口 + 80 仅做路径分流」，**不是** FlyOS 专属。常见 Klipper 主机请优先用 **`sudo bash install/install-nginx-dual-ui.sh`**（按本机 `~/mainsail`、`~/fluidd` 与 Moonraker 端口生成配置），说明见 **`docs/nginx-generic/README.md`**。FlyOS 原始片段对照见 **`docs/nginx-flyos/`**。若使用上游官方前端且未替换，可参考 `docs/SKILL.md`。
 
-**`/m/#/` 仍不是 Mainsail**：多半是未按上述三段式启用 nginx，或 **`mainsail.9081.conf` 的 `root` 与 `install-web.sh` 部署路径不一致**。排障步骤见 **`docs/nginx-flyos/TROUBLESHOOTING.md`**；在打印机主机上可执行 `bash install/diagnose-web-ui.sh` 自检。**临时绕过**：若已配置 **9081**，可直接访问 **`http://打印机IP:9081/`**。
+**`/m/#/` 仍不是 Mainsail**：多半是未启用「双后端 + 80 分流」，或 **`root` 与 `install-web.sh` 部署路径不一致**。优先 **`install-nginx-dual-ui.sh`** + **`docs/nginx-generic/README.md`**；排障见 **`docs/nginx-flyos/TROUBLESHOOTING.md`**；可执行 **`bash install/diagnose-web-ui.sh`**。**临时绕过**：访问 **`http://打印机IP:端口/`**（默认 Mainsail 后端 **`PLR_MAINSAIL_PORT=9081`**，若已修改则用该端口）。
 
 ### 故障排除：`No module named 'psutil'`
 
@@ -131,7 +131,9 @@ sudo systemctl restart klipper
 | `config/` | `plr.cfg.example` |
 | `VERSION` | **发行版本号**（单行，与下文「当前版本」同步） |
 | `install.sh` | **交互安装入口**（Klipper + 可选 KS + 可选 Web） |
-| `install/` | `install-*.sh`、`post-setup.sh`、`ensure-psutil.sh`、`diagnose-web-ui.sh` |
+| `install/` | `install-*.sh`、`post-setup.sh`、`ensure-psutil.sh`、`diagnose-web-ui.sh`、`install-nginx-dual-ui.sh`、`nginx-templates/` |
+| `docs/nginx-generic/` | 双 UI 通用 nginx 原理与 **`install-nginx-dual-ui.sh`** |
+| `docs/nginx-flyos/` | FlyOS 原始片段对照 |
 | `web/mainsail`、`web/fluidd` | 定制前端静态资源（PLR 弹窗） |
 
 **Moonraker** 无需补丁。
