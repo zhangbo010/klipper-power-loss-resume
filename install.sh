@@ -169,6 +169,8 @@ fi
 # --- 可选：Mainsail / Fluidd（定制 PLR 弹窗）---
 WEB_MS="${ROOT}/web/mainsail/index.html"
 WEB_FD="${ROOT}/web/fluidd/index.html"
+_web=""
+WEB_BOTH_OK=0
 if [[ -f "$WEB_MS" ]] || [[ -f "$WEB_FD" ]]; then
   echo ""
   echo "网页端：本仓库含定制 Mainsail/Fluidd 静态资源（续打弹窗）。"
@@ -177,7 +179,11 @@ if [[ -f "$WEB_MS" ]] || [[ -f "$WEB_FD" ]]; then
   _web="${_web:-n}"
   if [[ "${_web}" == [yY]* ]]; then
     export INSTALL_WEB=both
-    bash "${INST}/install-web.sh" || echo "提示: 若仅安装其一或路径特殊，可稍后执行: sudo INSTALL_WEB=mainsail|fluidd MAINSAIL_DIR=... FLUIDD_DIR=... bash install/install-web.sh"
+    if bash "${INST}/install-web.sh"; then
+      WEB_BOTH_OK=1
+    else
+      echo "提示: 若仅安装其一或路径特殊，可稍后执行: sudo INSTALL_WEB=mainsail|fluidd MAINSAIL_DIR=... FLUIDD_DIR=... bash install/install-web.sh"
+    fi
   elif [[ "${_web}" == [mM]* ]] && [[ -f "$WEB_MS" ]]; then
     export INSTALL_WEB=mainsail
     bash "${INST}/install-web.sh" || true
@@ -190,11 +196,20 @@ else
   echo "（未找到 web/mainsail 或 web/fluidd，已跳过网页部署。完整克隆仓库后重试。）"
 fi
 
-if [[ -f "${ROOT}/install/install-nginx-dual-ui.sh" ]]; then
-  echo ""
-  echo "提示：若需同机使用 http://IP/m/ 与 /f/，在部署静态文件后可执行:"
-  echo "  sudo bash install/install-nginx-dual-ui.sh"
-  echo "  说明见 docs/nginx-generic/README.md"
+# 两者都部署成功且仓库含双端静态文件时，自动生成 nginx 双 UI 配置（/m/、/f/）
+if [[ "${SKIP_NGINX_DUAL_UI:-}" != "1" ]] && [[ -f "${ROOT}/install/install-nginx-dual-ui.sh" ]]; then
+  if [[ "${_web}" == [yY]* ]] && [[ "$WEB_BOTH_OK" == "1" ]] && [[ -f "$WEB_MS" && -f "$WEB_FD" ]]; then
+    echo ""
+    echo ">>> 生成 nginx 双 UI 配置（http://IP/m/ 与 /f/）…"
+    if bash "${INST}/install-nginx-dual-ui.sh"; then
+      _ng="$(read_yesno "是否启用上述配置并 reload nginx（若本机已有 listen 80 的旧站点，请先备份/禁用以免冲突）？[y/N] ")"
+      if [[ "${_ng}" == [yY]* ]]; then
+        PLR_NGINX_ENABLE=1 bash "${INST}/install-nginx-dual-ui.sh" || echo "提示: 启用失败时可稍后: sudo PLR_NGINX_ENABLE=1 bash install/install-nginx-dual-ui.sh"
+      fi
+    else
+      echo "提示: 可稍后执行: sudo bash install/install-nginx-dual-ui.sh（见 docs/nginx-generic/README.md）"
+    fi
+  fi
 fi
 
 echo ""

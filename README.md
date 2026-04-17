@@ -74,6 +74,8 @@ sudo INSTALL_WEB=both bash install/install-web.sh
 # 自定义路径: sudo MAINSAIL_DIR=/path FLUIDD_DIR=/path INSTALL_WEB=both bash install/install-web.sh
 ```
 
+一键 **`install.sh`**：若你选择 **同时部署 Mainsail+Fluidd**（`y`）且成功，会**自动生成** `install-nginx-dual-ui.sh` 的 nginx 配置，并询问是否 **启用并 reload**；若不想跑 nginx 步骤可设 **`SKIP_NGINX_DUAL_UI=1`**。
+
 ### 5. 打印机配置（`install.sh` 已尽量自动完成）
 
 交互安装结束后会运行 **`install/post-setup.sh`**：在 **`printer_data/config/`** 下复制 **`plr.cfg`**、向 **`printer.cfg`** 追加 **`[include plr.cfg]`**、尝试 **`systemctl restart klipper`**（若装了 KlipperScreen 补丁则尝试重启对应服务）。**你必须**打开 **`plr.cfg`** 核对 **`power_pin`** 等硬件相关项。
