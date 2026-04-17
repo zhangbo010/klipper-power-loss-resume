@@ -12,6 +12,18 @@ source "${INST}/common.sh"
 
 die() { echo "错误: $*" >&2; exit 1; }
 
+# set -e 下 read 遇 EOF/非 TTY 会返回非零导致脚本静默退出，故对交互 read 统一容错
+read_yesno() {
+  local prompt="$1"
+  local _v=""
+  if ! IFS= read -r -p "$prompt" _v; then
+    echo "" >&2
+    echo "（未读取到输入，已按「否」处理。请在真实终端中运行: bash install.sh）" >&2
+    _v=""
+  fi
+  printf '%s' "$_v"
+}
+
 if [[ "$(id -u)" -ne 0 ]]; then
   echo "将使用 sudo 提权以写入 Klipper / KlipperScreen 目录…"
   exec sudo bash "$0" "$@"
@@ -30,7 +42,7 @@ fi
 
 if ! python3 -c "import psutil" 2>/dev/null; then
   echo "未检测到 Python 模块 psutil（Klipper 续打需要）。"
-  read -r -p "是否使用 apt 安装 python3-psutil？[Y/n] " _ps
+  _ps="$(read_yesno "是否使用 apt 安装 python3-psutil？[Y/n] ")"
   if [[ -z "${_ps}" ]] || [[ "${_ps}" == [Yy]* ]]; then
     if command -v apt-get >/dev/null; then
       apt-get update -qq && apt-get install -y python3-psutil
@@ -60,25 +72,25 @@ echo "  PRINTER_DATA=${PD:-（未找到）}"
 echo ""
 echo "  [1] 使用上述路径（若某项未找到，稍后可手动输入）"
 echo "  [2] 手动输入 KLIPPER_HOME 与 PRINTER_DATA"
-read -r -p "请选择 [1/2]（默认 1）: " _path_choice
+_path_choice="$(read_yesno "请选择 [1/2]（默认 1）: ")"
 _path_choice="${_path_choice:-1}"
 
 unset KLIPPER_HOME PRINTER_DATA
 case "${_path_choice}" in
   2)
-    read -r -p "KLIPPER_HOME（须含 klippy/extras）: " KLIPPER_HOME
-    read -r -p "PRINTER_DATA（可留空，须含 config/）: " PRINTER_DATA
+    KLIPPER_HOME="$(read_yesno "KLIPPER_HOME（须含 klippy/extras）: ")"
+    PRINTER_DATA="$(read_yesno "PRINTER_DATA（可留空，须含 config/）: ")"
     ;;
   *)
     if [[ -n "$KH" ]]; then
       KLIPPER_HOME="$KH"
     else
-      read -r -p "未探测到 Klipper，请手动输入 KLIPPER_HOME: " KLIPPER_HOME
+      KLIPPER_HOME="$(read_yesno "未探测到 Klipper，请手动输入 KLIPPER_HOME: ")"
     fi
     if [[ -n "$PD" ]]; then
       PRINTER_DATA="$PD"
     else
-      read -r -p "未探测到 printer_data，可留空；若需自动放置 plr 示例请输入路径: " PRINTER_DATA
+      PRINTER_DATA="$(read_yesno "未探测到 printer_data，可留空；若需自动放置 plr 示例请输入路径: ")"
     fi
     ;;
 esac
@@ -97,9 +109,12 @@ echo ""
 echo ">>> 正在安装 Klipper 插件 …"
 bash "${INST}/install-klipper.sh"
 
-# --- 可选 KlipperScreen ---
 echo ""
-read -r -p "是否安装 KlipperScreen 补丁（续打入口）？[y/N] " _ks
+echo ">>> Klipper 插件已写入。接下来为可选步骤（KlipperScreen / 网页端）。"
+echo ""
+
+# --- 可选 KlipperScreen ---
+_ks="$(read_yesno "是否安装 KlipperScreen 补丁（续打入口）？[y/N] ")"
 if [[ "${_ks}" == [yY]* ]]; then
   unset KLIPPERSCREEN_HOME
   KS=""
@@ -107,22 +122,22 @@ if [[ "${_ks}" == [yY]* ]]; then
     KS="$KS_TRY"
   fi
   echo "探测到 KlipperScreen: ${KS:-（未找到）}"
-  read -r -p "使用该路径？[Y/n/手动输入 m] " _ksc
+  _ksc="$(read_yesno "使用该路径？[Y/n/手动输入 m] ")"
   _ksc="${_ksc:-Y}"
   case "${_ksc}" in
     [Mm]*)
-      read -r -p "KLIPPERSCREEN_HOME: " KLIPPERSCREEN_HOME
+      KLIPPERSCREEN_HOME="$(read_yesno "KLIPPERSCREEN_HOME: ")"
       export KLIPPERSCREEN_HOME
       ;;
     [Nn]*)
-      read -r -p "KLIPPERSCREEN_HOME: " KLIPPERSCREEN_HOME
+      KLIPPERSCREEN_HOME="$(read_yesno "KLIPPERSCREEN_HOME: ")"
       export KLIPPERSCREEN_HOME
       ;;
     *)
       if [[ -n "$KS" ]]; then
         export KLIPPERSCREEN_HOME="$KS"
       else
-        read -r -p "请手动输入 KLIPPERSCREEN_HOME: " KLIPPERSCREEN_HOME
+        KLIPPERSCREEN_HOME="$(read_yesno "请手动输入 KLIPPERSCREEN_HOME: ")"
         export KLIPPERSCREEN_HOME
       fi
       ;;
@@ -141,7 +156,7 @@ if [[ -f "$WEB_MS" ]] || [[ -f "$WEB_FD" ]]; then
   echo ""
   echo "网页端：本仓库含定制 Mainsail/Fluidd 静态资源（续打弹窗）。"
   echo "  [y] 两者都部署  [m] 仅 Mainsail  [f] 仅 Fluidd  [n] 跳过"
-  read -r -p "是否部署到本机 Moonraker 网页目录？[y/m/f/N] " _web
+  _web="$(read_yesno "是否部署到本机 Moonraker 网页目录？[y/m/f/N] ")"
   _web="${_web:-n}"
   if [[ "${_web}" == [yY]* ]]; then
     export INSTALL_WEB=both
