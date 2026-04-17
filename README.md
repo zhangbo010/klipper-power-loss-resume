@@ -89,7 +89,14 @@ sudo bash install/post-setup.sh /home/你的用户/printer_data yes
 
 ### 故障排除：`No module named 'psutil'`
 
-定制版 **`virtual_sdcard.py`** 依赖 **`psutil`**，且必须与 **Klipper 实际使用的 Python** 一致（常见为 **`~/klipper/venv`**，与系统 **`python3-psutil`** 不是同一环境）。
+定制版 **`virtual_sdcard.py`** 依赖 **`psutil`**，且必须与 **Klipper 实际使用的 Python** 一致。若脚本把包装进了 **venv** 而 **`klipper.service` 用的是系统解释器**（例如 FlyOS：`ExecStart=/usr/bin/python /data/klipper/klippy/klippy.py …`），会出现此错误。本仓库脚本会**优先从 `klipper.service` 的 `ExecStart` 解析**解释器再安装 psutil；仍不对时可显式指定：
+
+```bash
+export KLIPPER_PYTHON=/usr/bin/python   # 与 systemctl cat klipper.service 里第一条命令一致
+cd ~/klipper-power-loss-resume
+bash install/ensure-psutil.sh
+sudo systemctl restart klipper
+```
 
 仓库自带 **`vendor/psutil/*.whl`**（Linux x86_64 / aarch64），**`install/ensure-psutil.sh`** 会**优先离线安装**，无需访问 PyPI。
 

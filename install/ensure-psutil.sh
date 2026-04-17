@@ -3,6 +3,7 @@
 # 优先使用仓库 vendor/psutil 中的 wheel 离线安装，失败再 pip/ apt
 # 用法（在仓库根目录）:
 #   export KLIPPER_HOME=/home/user/klipper   # 可选，未设则自动探测
+#   export KLIPPER_PYTHON=/usr/bin/python   # 可选；与 klipper.service 里 ExecStart 一致（FlyOS 常见）
 #   bash install/ensure-psutil.sh
 # 若需 sudo 提权:
 #   sudo bash install/ensure-psutil.sh
@@ -66,9 +67,11 @@ pip_install_psutil() {
     run_pip "$KPY" -m pip install psutil
   else
     if command -v apt-get >/dev/null && [[ "$(id -u)" -eq 0 ]]; then
-      apt-get update -qq && apt-get install -y python3-psutil
-    else
-      run_pip "$KPY" -m pip install psutil
+      apt-get update -qq && apt-get install -y python3-psutil || true
+    fi
+    if ! "$KPY" -c "import psutil" 2>/dev/null; then
+      run_pip "$KPY" -m pip install psutil \
+        || run_pip "$KPY" -m pip install psutil --break-system-packages
     fi
   fi
 }

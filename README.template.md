@@ -27,7 +27,7 @@ cd klipper-power-loss-resume
 
 ### 2. 依赖
 
-**psutil**：定制 **`virtual_sdcard`** 需要；Klipper 常用 **`~/klipper/venv`**，与系统 **`apt install python3-psutil`** 不是同一 Python。仓库含 **`vendor/psutil/*.whl`**（Linux x86_64 / aarch64），**`install/ensure-psutil.sh`** 会优先离线装入 venv。若仍缺，再 `pip install psutil` 或 `apt install python3-psutil`（仅当 Klipper 用系统 python3 时）。
+**psutil**：定制 **`virtual_sdcard`** 需要；须与 **`klipper.service` 里实际运行的 Python** 一致（脚本会从 **`ExecStart`** 解析；FlyOS 等常为 **`/usr/bin/python`** 而非 venv）。仓库含 **`vendor/psutil/*.whl`**（Linux x86_64 / aarch64），**`install/ensure-psutil.sh`** 优先离线安装。若仍报 **`No module named 'psutil'`**，可设 **`KLIPPER_PYTHON`** 与 **`systemctl cat klipper.service`** 中解释器路径一致后再执行 **`bash install/ensure-psutil.sh`**。
 
 ### 3. 交互安装（推荐）
 

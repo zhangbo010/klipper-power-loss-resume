@@ -31,6 +31,7 @@ detect_klipper_home() {
     "${KLIPPER_HOME:-}" \
     "${EH}/klipper" \
     "${EH}/Klipper" \
+    /data/klipper \
     /home/pi/klipper \
     /usr/share/klipper; do
     [[ -z "$d" ]] && continue
@@ -77,9 +78,52 @@ detect_klipperscreen_home() {
   return 1
 }
 
+# 从 systemd 单元解析 Klipper 实际使用的 Python（须与 klippy 进程一致，否则 psutil 会装错环境）
+# FlyOS 等常为 ExecStart=/usr/bin/python /data/klipper/klippy/klippy.py ...（无 venv，且可能不同于 `python3`）
+detect_klipper_python_from_systemd() {
+  local candidates line exec_line first
+  candidates=""
+  if command -v systemctl >/dev/null 2>&1; then
+    candidates="$(systemctl cat klipper.service 2>/dev/null || true)"
+  fi
+  if [[ -z "$candidates" ]] && [[ -f /etc/systemd/system/klipper.service ]]; then
+    candidates="$(cat /etc/systemd/system/klipper.service)"
+  fi
+  if [[ -z "$candidates" ]] && [[ -f /lib/systemd/system/klipper.service ]]; then
+    candidates="$(cat /lib/systemd/system/klipper.service)"
+  fi
+  line="$(echo "$candidates" | grep '^ExecStart=' | head -1)" || return 1
+  [[ -z "$line" ]] && return 1
+  exec_line="${line#ExecStart=}"
+  exec_line="$(echo "$exec_line" | sed 's/^[[:space:]]*//')"
+  # systemd 允许 ExecStart 第一个参数前加 - : @ + !（忽略失败、特权等）
+  while [[ "$exec_line" =~ ^[-+:@!] ]]; do
+    exec_line="${exec_line:1}"
+    exec_line="$(echo "$exec_line" | sed 's/^[[:space:]]*//')"
+  done
+  read -r first _ <<< "$exec_line"
+  [[ -z "$first" ]] && return 1
+  case "$(basename "$first")" in
+    python|python2|python3|python2.*|python3.*) ;;
+    *) return 1 ;;
+  esac
+  [[ -x "$first" ]] || return 1
+  echo "$first"
+  return 0
+}
+
 # Klipper 实际使用的 Python（KIAUH 等常为 ~/klipper/venv/bin/python，与系统 python3 不同）
+# 顺序：显式 KLIPPER_PYTHON → systemd ExecStart（与运行中服务一致）→ venv → PATH 中的 python3
 detect_klipper_python() {
-  local kh="${KLIPPER_HOME:-}"
+  local kh="${KLIPPER_HOME:-}" py
+  if [[ -n "${KLIPPER_PYTHON:-}" ]] && [[ -x "${KLIPPER_PYTHON}" ]]; then
+    echo "${KLIPPER_PYTHON}"
+    return 0
+  fi
+  if py="$(detect_klipper_python_from_systemd)"; then
+    echo "$py"
+    return 0
+  fi
   if [[ -n "$kh" ]]; then
     if [[ -x "${kh}/venv/bin/python" ]]; then
       echo "${kh}/venv/bin/python"

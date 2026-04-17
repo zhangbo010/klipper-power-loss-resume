@@ -4,8 +4,9 @@
 #   sudo bash install/install-klipper.sh
 # 或交互安装: sudo bash install.sh
 # 环境变量（可选，一般可省略，脚本会尝试自动发现）:
-#   KLIPPER_HOME   Klipper 源码根目录（须含 klippy/extras）
-#   PRINTER_DATA   Moonraker 配置目录（须含 config/），用于放置 plr.cfg.example
+#   KLIPPER_HOME    Klipper 源码根目录（须含 klippy/extras）
+#   KLIPPER_PYTHON  若自动探测错误，可显式指定与 systemd 中 klippy 相同的解释器（如 FlyOS: /usr/bin/python）
+#   PRINTER_DATA    Moonraker 配置目录（须含 config/），用于放置 plr.cfg.example
 #
 # 说明：若以 sudo 运行且 home 在 NFS(root_squash)，root 可能无法读取 /home/user 下文件；
 #       本脚本在存在 SUDO_USER 时用 sudo -u 该用户执行复制，避免静默失败。
