@@ -4,9 +4,9 @@
 静态测试：模拟 virtual_sdcard 的「Z 变化触发快照」与 power_loss_resume 的「弹窗 / get_info」判定。
 不依赖 Klipper，仅验证与仓库内逻辑一致的条件与数据流。
 
-运行（在仓库根目录）:
-  python tests/test_plr_static.py
-  python -m unittest tests/test_plr_static.py -v
+运行（在仓库根目录；Debian 等无 python 命令时请用 python3）:
+  python3 tests/test_plr_static.py -v
+  python3 -m unittest tests/test_plr_static.py -v
 """
 
 from __future__ import annotations
