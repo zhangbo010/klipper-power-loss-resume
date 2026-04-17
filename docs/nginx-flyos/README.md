@@ -37,3 +37,7 @@
 ## Caddy（FlyOS 可选）
 
 本目录 **`Caddyfile.flyos.example`** 为 FlyOS `etc/caddy/Caddyfile-m` 的精简摘录：`:80` 上 `handle_path /m/*` → `9081`、`/f/*` → `9080`，另设 `:9080`、`:9081` 独立站点；逻辑与 nginx 三端口方案一致。
+
+## 排障
+
+见 **`TROUBLESHOOTING.md`**；仓库 **`install/diagnose-web-ui.sh`** 可在目标机上快速检查 9081 与 `/m/`。

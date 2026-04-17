@@ -92,6 +92,8 @@ sudo bash install/post-setup.sh /home/你的用户/printer_data yes
 
 **`/m/` 与 `/f/` 同机切换（FlyOS 方式）**：仅覆盖静态文件**不够**；需要 **80 端口** 把 `/m/`、`/f/` 分别反代到 **9081 / 9080**，且 **9080、9081** 各有一个 **nginx** `server` 提供对应静态文件与 Moonraker 转发。详见 **`docs/nginx-flyos/README.md`** 及其中示例配置。若使用上游官方前端且未替换，可参考 `docs/SKILL.md`。
 
+**`/m/#/` 仍不是 Mainsail**：多半是未按上述三段式启用 nginx，或 **`mainsail.9081.conf` 的 `root` 与 `install-web.sh` 部署路径不一致**。排障步骤见 **`docs/nginx-flyos/TROUBLESHOOTING.md`**；在打印机主机上可执行 `bash install/diagnose-web-ui.sh` 自检。**临时绕过**：若已配置 **9081**，可直接访问 **`http://打印机IP:9081/`**。
+
 ### 故障排除：`No module named 'psutil'`
 
 定制版 **`virtual_sdcard.py`** 依赖 **`psutil`**，且必须与 **Klipper 实际使用的 Python** 一致。若只用系统包安装了 **`python3-psutil`**，而 Klipper 运行在 **`~/klipper/venv`** 里，仍会报错。
@@ -129,7 +131,7 @@ sudo systemctl restart klipper
 | `config/` | `plr.cfg.example` |
 | `VERSION` | **发行版本号**（单行，与下文「当前版本」同步） |
 | `install.sh` | **交互安装入口**（Klipper + 可选 KS + 可选 Web） |
-| `install/` | `install-*.sh`、`post-setup.sh`、`ensure-psutil.sh`（psutil 排错） |
+| `install/` | `install-*.sh`、`post-setup.sh`、`ensure-psutil.sh`、`diagnose-web-ui.sh` |
 | `web/mainsail`、`web/fluidd` | 定制前端静态资源（PLR 弹窗） |
 
 **Moonraker** 无需补丁。
