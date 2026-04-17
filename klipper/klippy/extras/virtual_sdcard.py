@@ -38,6 +38,8 @@ class VirtualSD:
         self.is_pwr_loss_resume = False
         self.layer_change_count = 0
         self.is_resume_speed = False
+        # PLR：按 Z 变化打快照（无 power_pin 时主要靠层间 Z 抬升触发）
+        self._plr_snap_last_z = None
         # Work timer
         self.reactor = self.printer.get_reactor()
         self.must_pause_work = self.cmd_from_sd = False
@@ -712,7 +714,27 @@ class VirtualSD:
                     self.reactor.pause(self.reactor.monotonic() + 0.001)
                     return True
         return False
-    
+
+    def _maybe_plr_z_snapshot(self):
+        """每条 SD 指令成功后：若 gcode Z 与上次快照时相比有变化则写入断电快照。"""
+        if self.power_loss_resume is None:
+            return
+        try:
+            gcode_move = self.printer.lookup_object("gcode_move")
+            z = gcode_move.get_status()["gcode_position"][2]
+        except Exception:
+            return
+        if self._plr_snap_last_z is None:
+            self._plr_snap_last_z = z
+            return
+        if abs(z - self._plr_snap_last_z) <= 1e-5:
+            return
+        self._plr_snap_last_z = z
+        try:
+            self.power_loss_resume._save_power_loss_info()
+        except Exception:
+            logging.exception("power_loss_resume: Z snapshot save failed")
+
     # Background work timer
     def work_handler(self, eventtime):
         if self.is_from_height:
@@ -736,6 +758,7 @@ class VirtualSD:
                 self.gcode.respond_raw("文件解析完成")
 
         logging.info("Starting SD card print (position %d)", self.file_position)
+        self._plr_snap_last_z = None
         self.reactor.unregister_timer(self.work_timer)
         try:
             self.current_file.seek(self.file_position)
@@ -809,6 +832,8 @@ class VirtualSD:
             except:
                 logging.exception("virtual_sdcard dispatch")
                 break
+            else:
+                self._maybe_plr_z_snapshot()
             self.cmd_from_sd = False
             self.file_position = self.next_file_position
             # Do we need to skip around?
