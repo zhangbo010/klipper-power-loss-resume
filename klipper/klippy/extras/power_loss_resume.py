@@ -18,9 +18,17 @@ class PowerLossResume:
         )
         self.printer.register_event_handler("klippy:ready", self._handle_ready)
 
-        self.buttons = self.printer.load_object(config, "buttons")
-        power_pin = config.get("power_pin")
-        self.buttons.register_buttons([power_pin], self._power_button_handler)
+        # power_pin：有则注册按键（关机前保存）；无则依赖 snapshot_interval 定时快照（通用 Klipper 无专用引脚时）
+        self.use_power_pin = False
+        self.snapshot_timer = None
+        self.snapshot_interval = config.getfloat(
+            "snapshot_interval", 1.0, minval=0.0
+        )
+        power_pin = config.get("power_pin", None)
+        if power_pin is not None and str(power_pin).strip() != "":
+            self.buttons = self.printer.load_object(config, "buttons")
+            self.buttons.register_buttons([power_pin], self._power_button_handler)
+            self.use_power_pin = True
 
         self.is_shutdown = config.getboolean("is_shutdown", True)
         self.paused_recover_z = config.getfloat("paused_recover_z", 0.0)
@@ -102,6 +110,24 @@ class PowerLossResume:
                 "heaters not found. Cannot start power loss resume."
             )
         self._read_power_loss_info()
+        # 无 power_pin 时：按 snapshot_interval（默认 1s）在打印中周期性写入快照
+        if (
+            not self.use_power_pin
+            and self.snapshot_interval > 0.0
+            and self.snapshot_timer is None
+        ):
+            self.snapshot_timer = self.reactor.register_timer(
+                self._snapshot_timer, self.reactor.NOW
+            )
+
+    def _snapshot_timer(self, eventtime):
+        if self.printer.is_shutdown():
+            return self.reactor.NEVER
+        if self.use_power_pin or self.snapshot_interval <= 0.0:
+            return self.reactor.NEVER
+        if self.printer._is_printing():
+            self._save_power_loss_info(True)
+        return eventtime + self.snapshot_interval
 
     def get_status(self, eventtime):
         if (
