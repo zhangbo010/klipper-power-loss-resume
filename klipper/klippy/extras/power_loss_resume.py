@@ -9,6 +9,37 @@ import os, logging, io
 INFO_FILE = ".power_loss_recover.json"
 
 
+def _persist_power_loss_json(path, data_dict):
+    """
+    尽量及时落盘：先写同目录 .tmp，fsync 后再原子 replace 到目标文件，
+    并对所在目录 fsync，降低掉电时出现半截 JSON 或旧文件损坏的概率。
+    """
+    tmp_path = path + ".tmp"
+    try:
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            json.dump(data_dict, f)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp_path, path)
+    except Exception:
+        try:
+            if os.path.isfile(tmp_path):
+                os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
+    try:
+        dirpath = os.path.dirname(os.path.abspath(path))
+        if dirpath:
+            dfd = os.open(dirpath, os.O_RDONLY)
+            try:
+                os.fsync(dfd)
+            finally:
+                os.close(dfd)
+    except OSError:
+        pass
+
+
 class PowerLossResume:
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -271,9 +302,7 @@ class PowerLossResume:
         else:
             self.power_loss_info = {"power_loss_resume": False}
         logging.info(json.dumps(self.power_loss_info, indent=4))
-        with open(self.sdcard_dirname, "w") as file:
-            json.dump(self.power_loss_info, file)
-            os.fsync(file.fileno())
+        _persist_power_loss_json(self.sdcard_dirname, self.power_loss_info)
 
     def _shutdown(self):
         try:
