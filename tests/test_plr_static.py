@@ -7,6 +7,7 @@
 运行（在仓库根目录；Debian 等无 python 命令时请用 python3）:
   python3 tests/test_plr_static.py -v
   python3 -m unittest tests/test_plr_static.py -v
+  python3 tests/run_plr_autotest.py
 """
 
 from __future__ import annotations
@@ -14,8 +15,9 @@ from __future__ import annotations
 import json
 import re
 import unittest
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 
 # ---------------------------------------------------------------------------
@@ -127,6 +129,10 @@ class MockPrintState:
 
     def apply_line(self, line: str) -> None:
         s = line.split(";")[0].strip().upper()
+        if s.startswith("G28"):
+            self.x = 0.0
+            self.y = 0.0
+            return
         if s.startswith("G0") or s.startswith("G1"):
             if "X" in s:
                 mx = re.search(r"X\s*([-+]?[0-9]*\.?[0-9]+)", s)
@@ -171,6 +177,27 @@ class SnapshotHarness:
             "print_stats": {"filename": "test.gcode", "state": "printing"},
             "gcode_move": {"gcode_position": [110.0, 120.0, z, 1.0]},
         }
+
+
+def simulate_gcode_text(text: str) -> SnapshotHarness:
+    """
+    按行模拟 SD 打印：每行成功后根据当前 Z 调用与 virtual_sdcard 一致的快照逻辑。
+    用于自动测试解析 examples/plr_motion_test.gcode 等。
+    """
+    st = MockPrintState()
+    h = SnapshotHarness()
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or line.startswith(";"):
+            continue
+        st.apply_line(line)
+        h.on_line_success(st.z)
+    return h
+
+
+def simulate_gcode_file(path: Union[str, Path]) -> SnapshotHarness:
+    p = Path(path)
+    return simulate_gcode_text(p.read_text(encoding="utf-8", errors="replace"))
 
 
 class TestZSnapshot(unittest.TestCase):
@@ -227,6 +254,26 @@ class TestGcodeParse(unittest.TestCase):
         self.assertAlmostEqual(parse_z_from_g0_g1("G1 Z0.4 F300"), 0.4)
         self.assertAlmostEqual(parse_z_from_g0_g1("g0 x1 y2 z5"), 5.0)
         self.assertIsNone(parse_z_from_g0_g1("G1 X10"))
+
+
+class TestExampleMotionGcode(unittest.TestCase):
+    """自动解析仓库内 examples/plr_motion_test.gcode（若存在）。"""
+
+    def test_plr_motion_test_snapshots(self):
+        root = Path(__file__).resolve().parents[1]
+        gcode = root / "examples" / "plr_motion_test.gcode"
+        if not gcode.is_file():
+            self.skipTest("examples/plr_motion_test.gcode 不存在")
+        h = simulate_gcode_file(gcode)
+        self.assertGreaterEqual(
+            h.save_calls,
+            15,
+            "示例运动 gcode 应产生多次 Z 变化快照",
+        )
+        self.assertIsNotNone(h.last_info)
+        self.assertTrue(plr_klipper_object_shows_resume(h.last_info))
+        gi = build_get_info_response(h.last_info)
+        self.assertTrue(fluidd_popup_should_open(gi))
 
 
 class TestIntegratedScenario(unittest.TestCase):
