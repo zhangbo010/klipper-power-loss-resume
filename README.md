@@ -1,16 +1,90 @@
 # Klipper 断电续打（PLR）
 
-## 标准 Klipper 上安装（终端用户）
+适用于已通过 **KIAUH**、官方脚本或各发行版安装的 **标准 Klipper**（**不需要** FlyOS）。可与 **Moonraker** 及定制 **Mainsail / Fluidd** 前端配合；详见 `docs/SKILL.md`。
+
+## 安装方法
+
+### 前提
+
+- 打印机主机上已安装 Klipper（常见目录：`~/klipper`，含 `klippy/extras`）。
+- 建议使用 Moonraker 时的默认 `printer_data/config`（脚本会尝试自动探测）。
+
+### 1. 获取本仓库
+
+**方式 A：Git 克隆（推荐）**
 
 ```bash
 git clone https://github.com/zhangbo010/klipper-power-loss-resume.git
 cd klipper-power-loss-resume
-# Debian/Ubuntu：python3-psutil（install 脚本会检查）
+```
+
+**方式 B：ZIP 下载**
+
+在 [GitHub 仓库页](https://github.com/zhangbo010/klipper-power-loss-resume) 选择 **Code → Download ZIP**，解压后 `cd` 到解压出的目录（须能看到 `install/`、`klipper/`）。
+
+### 2. 依赖
+
+Debian / Ubuntu：
+
+```bash
+sudo apt update
 sudo apt install -y python3-psutil
+```
+
+其他系统可用：`pip3 install psutil`（需与运行 Klipper 的 Python 一致）。
+
+### 3. 安装 Klipper 插件
+
+在**仓库根目录**（包含 `install/install-klipper.sh`）执行：
+
+```bash
 sudo bash install/install-klipper.sh
 ```
 
-将 **`config/plr.cfg.example`** 拷到打印机配置目录并 **`[include plr.cfg]`**。KlipperScreen 续打入口见 **`install/install-klipperscreen.sh`**。
+脚本会按 **`SUDO_USER`** 解析真实用户家目录，并尝试探测 `~/klipper`、`~/printer_data` 等。若探测失败，可显式指定（注意 `sudo` 会丢弃当前 shell 的环境变量，请写在命令前）：
+
+```bash
+sudo KLIPPER_HOME=/你的/klipper路径 PRINTER_DATA=/你的/printer_data bash install/install-klipper.sh
+```
+
+### 4. 打印机配置
+
+1. 将 `config/plr.cfg.example` 复制为 `printer_data/config/plr.cfg`（若安装脚本已写入 `plr.cfg.example`，可复制并改名）。
+2. 按主板修改 **`power_pin`** 及续打相关宏。
+3. 在 **`printer.cfg`** 中加入：`[include plr.cfg]`
+4. 重启 Klipper：
+
+```bash
+sudo systemctl restart klipper
+```
+
+### 5. KlipperScreen（可选）
+
+若使用 KlipperScreen，在仓库根目录执行：
+
+```bash
+sudo bash install/install-klipperscreen.sh
+# 或: sudo KLIPPERSCREEN_HOME=/path/to/KlipperScreen bash install/install-klipperscreen.sh
+```
+
+然后重启 KlipperScreen 服务（如 `sudo systemctl restart KlipperScreen`，具体以你系统为准）。
+
+### 6. 网页端（Mainsail / Fluidd）
+
+若仓库中未包含定制 `web/` 静态资源，需自行部署带 PLR 弹窗的 Mainsail/Fluidd（见 `docs/SKILL.md`）。
+
+---
+
+## 仓库目录说明（终端用户）
+
+| 路径 | 说明 |
+|------|------|
+| `klipper/klippy/extras/` | `power_loss_resume.py`、修改版 `virtual_sdcard.py` |
+| `klipperscreen/` | KlipperScreen 相关补丁 |
+| `config/` | `plr.cfg.example` |
+| `install/` | `install-klipper.sh`、`install-klipperscreen.sh` |
+
+**Moonraker** 无需补丁。
 
 ---
 

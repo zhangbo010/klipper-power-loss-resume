@@ -4,37 +4,63 @@
 
 Klipper **断电续打（Power Loss Resume）** 整合包：含 Klipper 模块、KlipperScreen 补丁、示例配置、安装脚本与文档。可与 **Moonraker** 及定制 **Mainsail / Fluidd** 前端配合使用。
 
-## 在已安装标准 Klipper 的机器上使用（推荐）
+## 安装方法
 
-适用于通过 **KIAUH**、官方安装脚本或各发行版安装的 Klipper（**不需要** FlyOS 或本仓库外的特殊目录结构）。
+### 前提
 
-1. **克隆或下载本仓库**到打印机主机（例如 `/home/pi/klipper-plr-kit`）。
-2. 安装依赖：`sudo apt install python3-psutil` 或 `pip3 install psutil`。
-3. 在仓库根目录执行：
+- 已安装 Klipper（常见：`~/klipper`，含 `klippy/extras`）。
+- 使用 Moonraker 时，脚本会尝试探测 `~/printer_data`。
+
+### 1. 获取本仓库
+
+**Git 克隆：**
 
 ```bash
-cd /path/to/本仓库
+git clone https://github.com/zhangbo010/klipper-power-loss-resume.git
+cd klipper-power-loss-resume
+```
+
+**或** 在 GitHub 页面 **Code → Download ZIP**，解压后进入含 `install/` 的目录。
+
+### 2. 依赖
+
+```bash
+sudo apt update
+sudo apt install -y python3-psutil
+```
+
+其他系统：`pip3 install psutil`（与 Klipper 所用 Python 一致）。
+
+### 3. 安装 Klipper 插件
+
+在仓库根目录：
+
+```bash
 sudo bash install/install-klipper.sh
 ```
 
-脚本会**自动探测**常见路径下的 Klipper（如 `~/klipper`、`/home/pi/klipper`）和 `printer_data`。若探测失败，可手动指定（注意 `sudo` 会丢弃当前 shell 的环境变量，需写在命令前或使用 `sudo -E`）：
+脚本按 **`SUDO_USER`** 解析家目录并探测 Klipper / `printer_data`。失败时显式指定：
 
 ```bash
 sudo KLIPPER_HOME=/你的/klipper路径 PRINTER_DATA=/你的/printer_data bash install/install-klipper.sh
 ```
 
-4. 将 `config/plr.cfg.example` 复制为 `printer_data/config/plr.cfg`（若上一步已复制 example 则编辑之），按主板修改 **`power_pin`** 与续打宏。
-5. 在 **`printer.cfg`** 末尾加入：`[include plr.cfg]`
-6. `sudo systemctl restart klipper`
+### 4. 打印机配置
 
-**KlipperScreen（可选）**
+1. 将 `config/plr.cfg.example` 复制为 `printer_data/config/plr.cfg`（或从已放置的 example 复制改名），按主板修改 **`power_pin`** 等。
+2. 在 **`printer.cfg`** 中加入：`[include plr.cfg]`
+3. `sudo systemctl restart klipper`
+
+### 5. KlipperScreen（可选）
 
 ```bash
 sudo bash install/install-klipperscreen.sh
 # 或: sudo KLIPPERSCREEN_HOME=/path/to/KlipperScreen bash install/install-klipperscreen.sh
 ```
 
-**网页端**：若本仓库未含 `web/` 目录，需自行部署带 PLR 弹窗的 Mainsail/Fluidd 静态资源（见 `docs/SKILL.md`）。
+### 6. 网页端（Mainsail / Fluidd）
+
+若未含定制 `web/`，需自行部署带 PLR 弹窗的前端（见 `docs/SKILL.md`）。
 
 ---
 
@@ -62,9 +88,9 @@ sudo bash install/install-klipperscreen.sh
 ## Git / GitHub
 
 ```bash
-git clone https://github.com/<USER>/<REPO>.git
-cd <REPO>
-# 然后按上文「在已安装标准 Klipper 的机器上使用」安装
+git clone https://github.com/zhangbo010/klipper-power-loss-resume.git
+cd klipper-power-loss-resume
+# 然后按上文「安装方法」操作
 ```
 
 维护者首次发布流程见 **`PUBLISH_GITHUB.md`**。
