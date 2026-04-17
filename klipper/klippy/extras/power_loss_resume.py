@@ -161,26 +161,51 @@ class PowerLossResume:
                 "heaters not found. Cannot start power loss resume."
             )
         self._read_power_loss_info()
+        self._validate_resume_snapshot_on_startup()
+
+    def _has_valid_resume_record(self):
+        """磁盘/内存中是否有结构完整的可续打记录（不区分是否应对 UI 展示）。"""
+        if self.power_loss_info is None:
+            return False
+        if not self.power_loss_info.get("power_loss_resume"):
+            return False
+        fp = self.power_loss_info.get("file_path")
+        if not fp or fp == "":
+            return False
+        ps = self.power_loss_info.get("print_stats") or {}
+        fn = ps.get("filename")
+        if not fn or fn == "":
+            return False
+        return True
+
+    def _should_expose_resume_to_ui(self, eventtime):
+        """
+        前端「是否续打」仅在**空闲**时展示：打印中不暴露，避免与当前任务混淆。
+        断电恢复场景：重启后未在开始打印前，应展示；Klipper 启动时另做文件校验。
+        """
+        if not self._has_valid_resume_record():
+            return False
+        if self._plr_cleared_by_user:
+            return False
+        if self._printer_is_printing():
+            return False
+        return True
+
+    def _validate_resume_snapshot_on_startup(self):
+        """仅在 klippy:ready 后执行：无效快照清除，避免重启后误提示。"""
+        if not self._has_valid_resume_record():
+            return
+        fp = self.power_loss_info.get("file_path")
+        if not fp or not os.path.isfile(fp):
+            logging.info(
+                "power_loss_resume: 启动校验未通过（G 文件不存在），清除快照"
+            )
+            self._save_power_loss_info(False)
 
     def get_status(self, eventtime):
-        if (
-            self.power_loss_info is not None
-            and "power_loss_resume" in self.power_loss_info
-        ):
-            if (
-                "file_path" in self.power_loss_info
-                and self.power_loss_info["file_path"] is not None
-                and self.power_loss_info["file_path"] != ""
-                and "print_stats" in self.power_loss_info
-                and self.power_loss_info["print_stats"]["filename"] is not None
-                and self.power_loss_info["print_stats"]["filename"] != ""
-            ):
-                power_loss_resume = self.power_loss_info["power_loss_resume"]
-            else:
-                power_loss_resume = False
-        else:
-            power_loss_resume = False
-        return {"power_loss_resume": power_loss_resume}
+        return {
+            "power_loss_resume": self._should_expose_resume_to_ui(eventtime),
+        }
 
     cmd_CLEAR_POWER_LOSS_RESUME_help = "Clear power loss resume info"
 
@@ -221,35 +246,21 @@ class PowerLossResume:
         web_request.send({"msg": "Clear power loss resume info"})
 
     def _handle_get_power_loss_resume_info(self, web_request):
-        if (
-            self.power_loss_info is not None
-            and "power_loss_resume" in self.power_loss_info
-        ):
-            if (
-                "file_path" in self.power_loss_info
-                and self.power_loss_info["file_path"] is not None
-                and self.power_loss_info["file_path"] != ""
-                and "print_stats" in self.power_loss_info
-                and self.power_loss_info["print_stats"]["filename"] is not None
-                and self.power_loss_info["print_stats"]["filename"] != ""
-            ):
-                power_loss_resume = self.power_loss_info["power_loss_resume"]
-            else:
-                power_loss_resume = False
+        eventtime = self.reactor.monotonic()
+        if self._should_expose_resume_to_ui(eventtime):
+            ret = {
+                "power_loss_resume": True,
+                "file_path": self.power_loss_info["file_path"],
+                "progress": self.power_loss_info["progress"],
+                "filename": self.power_loss_info["print_stats"]["filename"],
+            }
         else:
-            power_loss_resume = False
-        ret = {
-            "power_loss_resume": power_loss_resume,
-            "file_path": (
-                self.power_loss_info["file_path"] if power_loss_resume else None
-            ),
-            "progress": self.power_loss_info["progress"] if power_loss_resume else 0,
-            "filename": (
-                self.power_loss_info["print_stats"]["filename"]
-                if power_loss_resume
-                else None
-            ),
-        }
+            ret = {
+                "power_loss_resume": False,
+                "file_path": None,
+                "progress": 0,
+                "filename": None,
+            }
         web_request.send({"power_loss_info": ret})
 
     def _read_power_loss_info(self):
@@ -268,13 +279,23 @@ class PowerLossResume:
     def _printer_is_printing(self):
         """判断是否在打印/暂停；不依赖 Printer._is_printing（上游 Klipper 可能无此方法）。"""
         eventtime = self.reactor.monotonic()
-        ps = self.print_stats.get_status(eventtime)
-        if ps["state"] in ("printing", "paused"):
+        # SD 卡打印进行中时最可靠：print_stats 偶发未切到 printing 时仍应有 work_timer
+        vs = self.virtual_sdcard
+        if vs is not None and vs.work_timer is not None:
             return True
+        try:
+            ps = self.print_stats.get_status(eventtime)
+            if ps.get("state") in ("printing", "paused"):
+                return True
+        except Exception:
+            pass
         idle_timeout = self.printer.lookup_object("idle_timeout", None)
         if idle_timeout is not None:
-            if idle_timeout.get_status(eventtime)["state"] == "Printing":
-                return True
+            try:
+                if idle_timeout.get_status(eventtime)["state"] == "Printing":
+                    return True
+            except Exception:
+                pass
         return False
 
     def _printer_is_paused(self):

@@ -46,8 +46,15 @@ def maybe_plr_z_snapshot(
 # ---------------------------------------------------------------------------
 
 
-def plr_klipper_object_shows_resume(power_loss_info: Optional[Dict[str, Any]]) -> bool:
-    """对应 get_status 里用于 objects 订阅的 power_loss_resume 布尔值。"""
+def plr_klipper_object_shows_resume(
+    power_loss_info: Optional[Dict[str, Any]],
+    *,
+    printing: bool = False,
+    cleared_by_user: bool = False,
+) -> bool:
+    """对应 get_status：仅空闲且记录有效时为 True（打印中不对 UI 暴露）。"""
+    if cleared_by_user or printing:
+        return False
     if power_loss_info is None or "power_loss_resume" not in power_loss_info:
         return False
     if (
@@ -60,26 +67,30 @@ def plr_klipper_object_shows_resume(power_loss_info: Optional[Dict[str, Any]]) -
     return False
 
 
-def build_get_info_response(power_loss_info: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+def build_get_info_response(
+    power_loss_info: Optional[Dict[str, Any]],
+    *,
+    printing: bool = False,
+    cleared_by_user: bool = False,
+) -> Dict[str, Any]:
     """对应 Moonraker 转发的 /printer/power_loss_resume/get_info 中的 power_loss_info 结构。"""
-    if (
-        power_loss_info is not None
-        and "power_loss_resume" in power_loss_info
-        and power_loss_info.get("file_path")
-        and power_loss_info["file_path"] != ""
-        and "print_stats" in power_loss_info
-        and power_loss_info["print_stats"].get("filename")
-    ):
-        pr = bool(power_loss_info["power_loss_resume"])
-    else:
-        pr = False
+    pr = plr_klipper_object_shows_resume(
+        power_loss_info,
+        printing=printing,
+        cleared_by_user=cleared_by_user,
+    )
+    if not pr or power_loss_info is None:
+        return {
+            "power_loss_resume": False,
+            "file_path": None,
+            "progress": 0,
+            "filename": None,
+        }
     return {
-        "power_loss_resume": pr,
-        "file_path": power_loss_info["file_path"] if pr else None,
-        "progress": power_loss_info.get("progress", 0) if pr else 0,
-        "filename": (
-            power_loss_info["print_stats"]["filename"] if pr else None
-        ),
+        "power_loss_resume": True,
+        "file_path": power_loss_info["file_path"],
+        "progress": power_loss_info.get("progress", 0),
+        "filename": power_loss_info["print_stats"]["filename"],
     }
 
 
@@ -235,8 +246,9 @@ class TestPopupLogic(unittest.TestCase):
             "file_path": "/a/b.gcode",
             "print_stats": {"filename": "b.gcode"},
         }
-        self.assertTrue(plr_klipper_object_shows_resume(info))
-        gi = build_get_info_response(info)
+        self.assertTrue(plr_klipper_object_shows_resume(info, printing=False))
+        self.assertFalse(plr_klipper_object_shows_resume(info, printing=True))
+        gi = build_get_info_response(info, printing=False)
         self.assertTrue(fluidd_popup_should_open(gi))
         self.assertTrue(mainsail_show_dialog_hint(True, gi))
 
@@ -271,9 +283,11 @@ class TestExampleMotionGcode(unittest.TestCase):
             "示例运动 gcode 应产生多次 Z 变化快照",
         )
         self.assertIsNotNone(h.last_info)
-        self.assertTrue(plr_klipper_object_shows_resume(h.last_info))
-        gi = build_get_info_response(h.last_info)
-        self.assertTrue(fluidd_popup_should_open(gi))
+        # 模拟打印中：磁盘有快照但 UI 不弹续打；空闲后同一份记录可提示续打
+        self.assertFalse(plr_klipper_object_shows_resume(h.last_info, printing=True))
+        self.assertTrue(plr_klipper_object_shows_resume(h.last_info, printing=False))
+        self.assertFalse(fluidd_popup_should_open(build_get_info_response(h.last_info, printing=True)))
+        self.assertTrue(fluidd_popup_should_open(build_get_info_response(h.last_info, printing=False)))
 
 
 class TestIntegratedScenario(unittest.TestCase):
@@ -297,9 +311,9 @@ class TestIntegratedScenario(unittest.TestCase):
         # 首帧建立 Z 基准不保存，之后 Z 0.2 -> 0.4 至少一次快照
         self.assertGreaterEqual(h.save_calls, 1)
         self.assertIsNotNone(h.last_info)
-        gi = build_get_info_response(h.last_info)
-        self.assertTrue(fluidd_popup_should_open(gi))
-        self.assertTrue(plr_klipper_object_shows_resume(h.last_info))
+        self.assertFalse(fluidd_popup_should_open(build_get_info_response(h.last_info, printing=True)))
+        self.assertTrue(fluidd_popup_should_open(build_get_info_response(h.last_info, printing=False)))
+        self.assertTrue(plr_klipper_object_shows_resume(h.last_info, printing=False))
 
 
 def run_demo_print_json() -> None:
@@ -313,11 +327,11 @@ def run_demo_print_json() -> None:
             "state": "printing",
         },
     }
-    gi = build_get_info_response(info)
+    gi = build_get_info_response(info, printing=False)
     print("--- 示例 get_info（Moonraker 内层 power_loss_info）---")
     print(json.dumps({"power_loss_info": gi}, ensure_ascii=False, indent=2))
     print("fluidd_popup_should_open:", fluidd_popup_should_open(gi))
-    print("klipper object resume:", plr_klipper_object_shows_resume(info))
+    print("klipper object resume:", plr_klipper_object_shows_resume(info, printing=False))
 
 
 if __name__ == "__main__":
