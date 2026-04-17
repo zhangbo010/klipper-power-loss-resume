@@ -42,7 +42,8 @@ if [[ -f "$FLYOS_ROOT/packaging/plr-one-click/bundle/plr.cfg.example" ]]; then
   cp -a "$FLYOS_ROOT/packaging/plr-one-click/bundle/plr.cfg.example" "$OUT_DIR/config/"
 fi
 cp -a "$SCRIPT_DIR/install/common.sh" "$SCRIPT_DIR/install/install-klipper.sh" \
-  "$SCRIPT_DIR/install/install-klipperscreen.sh" "$SCRIPT_DIR/install/install-web.sh" "$OUT_DIR/install/"
+  "$SCRIPT_DIR/install/install-klipperscreen.sh" "$SCRIPT_DIR/install/install-web.sh" \
+  "$SCRIPT_DIR/install/post-setup.sh" "$OUT_DIR/install/"
 cp -a "$SCRIPT_DIR/install.sh" "$OUT_DIR/install.sh"
 chmod +x "$OUT_DIR/install.sh" "$OUT_DIR/install/"*.sh
 

@@ -119,8 +119,10 @@ echo ">>> Klipper 插件已写入。接下来为可选步骤（KlipperScreen / �
 echo ""
 
 # --- 可选 KlipperScreen ---
+DID_KS=no
 _ks="$(read_yesno "是否安装 KlipperScreen 补丁（续打入口）？[y/N] ")"
 if [[ "${_ks}" == [yY]* ]]; then
+  DID_KS=yes
   unset KLIPPERSCREEN_HOME
   KS=""
   if KS_TRY="$(detect_klipperscreen_home)"; then
@@ -183,11 +185,14 @@ else
 fi
 
 echo ""
+echo "======== 自动完成配置与重启 ========"
+if [[ "${SKIP_AUTO_POST:-}" == "1" ]]; then
+  echo "已设置 SKIP_AUTO_POST=1，跳过 post-setup（plr.cfg / printer.cfg / systemctl）。"
+else
+  bash "${INST}/post-setup.sh" "${PRINTER_DATA:-}" "${DID_KS}"
+fi
+
+echo ""
 echo "======== 安装步骤已完成 ========"
-echo "请手动完成："
-echo "  1. 将 ${PRINTER_DATA:-printer_data}/config/plr.cfg.example 复制为 plr.cfg（若尚未复制），按主板修改 power_pin 等"
-echo "  2. 在 printer.cfg 中加入: [include plr.cfg]"
-echo "  3. sudo systemctl restart klipper"
-echo "  4. 若已装 KlipperScreen 补丁，请重启对应服务（如 sudo systemctl restart KlipperScreen）"
-echo "  5. 若已部署网页，请强刷浏览器缓存（Ctrl+F5）"
+echo "请务必检查 ${PRINTER_DATA:-printer_data}/config/plr.cfg 中的 power_pin 等与主板一致。"
 echo ""

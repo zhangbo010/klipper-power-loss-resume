@@ -41,7 +41,7 @@ sudo apt install -y python3-psutil
 bash install.sh
 ```
 
-流程：检查 **psutil** → 确认 **Klipper** / **printer_data** → 安装 Klipper 插件 → 可选 **KlipperScreen** → 可选 **Mainsail/Fluidd** 部署。
+流程：检查 **psutil** → 确认路径 → 安装 Klipper → 可选 **KlipperScreen** → 可选 **Mainsail/Fluidd** → **自动** `plr.cfg`、`printer.cfg` include、`systemctl restart klipper`（及 KS）。须核对 **`power_pin`**；浏览器 **Ctrl+F5** 需自行操作。跳过自动收尾：`SKIP_AUTO_POST=1 bash install.sh`。
 
 ### 4. 仅命令行安装（高级）
 
@@ -50,13 +50,12 @@ sudo bash install/install-klipper.sh
 sudo KLIPPER_HOME=/你的/klipper路径 PRINTER_DATA=/你的/printer_data bash install/install-klipper.sh
 sudo bash install/install-klipperscreen.sh
 sudo INSTALL_WEB=both bash install/install-web.sh
+sudo PRINTER_DATA=/path/to/printer_data bash install/post-setup.sh
 ```
 
 ### 5. 打印机配置
 
-1. 将 `config/plr.cfg.example` 复制为 `printer_data/config/plr.cfg`（或从已放置的 example 复制改名），按主板修改 **`power_pin`** 等。
-2. 在 **`printer.cfg`** 中加入：`[include plr.cfg]`
-3. `sudo systemctl restart klipper`
+`install.sh` 会调用 **`install/post-setup.sh`** 自动复制 **`plr.cfg`**、追加 **`[include plr.cfg]`**、重启服务；**仍须编辑 `plr.cfg` 中 `power_pin`**。仅子脚本安装时请自行执行上一段中的 **`post-setup.sh`**。
 
 ### 6. 网页端
 
@@ -72,7 +71,7 @@ sudo INSTALL_WEB=both bash install/install-web.sh
 | `klipperscreen/` | `screen.py`、`panels/main_menu.py`（PLR 相关改动） |
 | `config/` | `plr.cfg.example` |
 | `install.sh` | **交互安装入口**（Klipper + 可选 KS + Web） |
-| `install/` | `common.sh`、`install-klipper.sh`、`install-klipperscreen.sh`、`install-web.sh` |
+| `install/` | `common.sh`、`install-*.sh`、`post-setup.sh` |
 | `docs/` | 功能说明（Skill 摘要） |
 | `web/mainsail`、`web/fluidd` | 定制前端静态资源 |
 

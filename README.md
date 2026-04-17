@@ -43,7 +43,7 @@ sudo apt install -y python3-psutil
 bash install.sh
 ```
 
-流程：**检查 psutil** → **确认 Klipper / `printer_data` 路径** → **安装 Klipper 插件** → **可选 KlipperScreen** → **可选部署 Mainsail/Fluidd 定制前端（续打弹窗）**。完成后按屏幕提示编辑 `plr.cfg` 并在 `printer.cfg` 中 `[include plr.cfg]`。
+流程：**检查 psutil** → **确认 Klipper / `printer_data` 路径** → **安装 Klipper 插件** → **可选 KlipperScreen** → **可选部署 Mainsail/Fluidd** → **自动**：`plr.cfg.example` 复制为 `plr.cfg`（若尚无）、在 `printer.cfg` 追加 `[include plr.cfg]`、`systemctl restart klipper`（若本步装了 KlipperScreen 则尝试重启其服务）。**仍需你核对** `plr.cfg` 里的 **`power_pin`** 等与主板一致；浏览器缓存请本地 **Ctrl+F5**（脚本无法代劳）。跳过自动收尾可设环境变量 **`SKIP_AUTO_POST=1`**。
 
 ### 4. 仅命令行安装（高级）
 
@@ -72,20 +72,21 @@ sudo INSTALL_WEB=both bash install/install-web.sh
 # 自定义路径: sudo MAINSAIL_DIR=/path FLUIDD_DIR=/path INSTALL_WEB=both bash install/install-web.sh
 ```
 
-### 5. 打印机配置
+### 5. 打印机配置（`install.sh` 已尽量自动完成）
 
-1. 将 `config/plr.cfg.example` 复制为 `printer_data/config/plr.cfg`（若安装脚本已写入 `plr.cfg.example`，可复制并改名）。
-2. 按主板修改 **`power_pin`** 及续打相关宏。
-3. 在 **`printer.cfg`** 中加入：`[include plr.cfg]`
-4. 重启 Klipper：
+交互安装结束后会运行 **`install/post-setup.sh`**：在 **`printer_data/config/`** 下复制 **`plr.cfg`**、向 **`printer.cfg`** 追加 **`[include plr.cfg]`**、尝试 **`systemctl restart klipper`**（若装了 KlipperScreen 补丁则尝试重启对应服务）。**你必须**打开 **`plr.cfg`** 核对 **`power_pin`** 等硬件相关项。
+
+仅执行了子脚本而未跑完整 **`install.sh`** 时，可手动：
 
 ```bash
-sudo systemctl restart klipper
+sudo PRINTER_DATA=/home/你的用户/printer_data bash install/post-setup.sh
+# 若本机也装了 KlipperScreen 并希望尝试重启其服务，第二参数传 yes:
+sudo bash install/post-setup.sh /home/你的用户/printer_data yes
 ```
 
 ### 6. 网页端说明
 
-本仓库含 **`web/mainsail`**、**`web/fluidd`**（FlyOS 定制构建，带续打弹窗）。交互安装 **`install.sh`** 会询问是否部署；或单独执行上一节的 **`install-web.sh`**。部署后请 **强刷浏览器缓存**（Ctrl+F5）。若你使用上游官方前端且未替换，可参考 `docs/SKILL.md` 自行合并逻辑。
+本仓库含 **`web/mainsail`**、**`web/fluidd`**。交互安装会询问是否部署；部署后请在浏览器 **Ctrl+F5** 强刷缓存。若使用上游官方前端且未替换，可参考 `docs/SKILL.md`。
 
 ---
 
@@ -97,7 +98,7 @@ sudo systemctl restart klipper
 | `klipperscreen/` | KlipperScreen 相关补丁 |
 | `config/` | `plr.cfg.example` |
 | `install.sh` | **交互安装入口**（Klipper + 可选 KS + 可选 Web） |
-| `install/` | `common.sh`、`install-klipper.sh`、`install-klipperscreen.sh`、`install-web.sh` |
+| `install/` | `common.sh`、`install-klipper.sh`、`install-klipperscreen.sh`、`install-web.sh`、`post-setup.sh` |
 | `web/mainsail`、`web/fluidd` | 定制前端静态资源（PLR 弹窗） |
 
 **Moonraker** 无需补丁。
