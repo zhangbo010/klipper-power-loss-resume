@@ -37,7 +37,7 @@ cd klipper-power-loss-resume
 bash install.sh
 ```
 
-流程：检查 **psutil** → 确认路径 → 安装 Klipper → 可选 **KlipperScreen** → 可选 **Mainsail/Fluidd** → **自动** `plr.cfg`、`printer.cfg` include、`systemctl restart klipper`（及 KS）。须核对 **`power_pin`**；浏览器 **Ctrl+F5** 需自行操作。跳过自动收尾：`SKIP_AUTO_POST=1 bash install.sh`。
+流程：**自动 ensure-psutil**（缺则装，优先 **vendor/psutil**）→ 确认路径 → 安装 Klipper → 可选 **KlipperScreen** → 可选 **Mainsail/Fluidd** → **自动** `plr.cfg`、`printer.cfg` include、`systemctl restart klipper`（及 KS）。须核对 **`power_pin`**；浏览器 **Ctrl+F5** 需自行操作。跳过 psutil 步骤：`SKIP_ENSURE_PSUTIL=1`；跳过收尾：`SKIP_AUTO_POST=1`。
 
 ### 4. 仅命令行安装（高级）
 

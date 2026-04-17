@@ -85,19 +85,18 @@ else
   unset PRINTER_DATA
 fi
 
-# --- psutil：必须与 Klipper 实际使用的 Python 一致（KIAUH 常见为 ~/klipper/venv，仅 apt 装系统包不够）---
+# --- psutil：必须与 Klipper 实际使用的 Python 一致（KIAUH 常见为 ~/klipper/venv；仓库 vendor/psutil 可离线安装）---
 KPY="$(detect_klipper_python)" || die "无法找到 python3，请先安装 Python3。"
 echo "==> Klipper 使用的 Python（用于检查 psutil）: $KPY"
-if ! "$KPY" -c "import psutil" 2>/dev/null; then
-  echo "未在「上述」解释器中找到 psutil；将优先使用仓库 vendor/psutil 中的 wheel 离线安装。"
-  _ps="$(read_yesno "是否自动安装 psutil 到该 Python？[Y/n] ")"
-  if [[ -z "${_ps}" ]] || [[ "${_ps}" == [Yy]* ]]; then
-    bash "${INST}/ensure-psutil.sh" || die "psutil 安装失败，请见 README 或 bash install/ensure-psutil.sh"
-  else
-    die "请先执行: bash install/ensure-psutil.sh（或 $KPY -m pip install psutil）"
+if [[ "${SKIP_ENSURE_PSUTIL:-}" == "1" ]]; then
+  echo "已设置 SKIP_ENSURE_PSUTIL=1，跳过 ensure-psutil（请自行保证 psutil 已装入该 Python）。"
+else
+  if ! "$KPY" -c "import psutil" 2>/dev/null; then
+    echo "==> 未检测到 psutil，自动执行 install/ensure-psutil.sh（优先 vendor/psutil 离线 wheel）…"
+    bash "${INST}/ensure-psutil.sh" || die "psutil 安装失败，请见 README"
   fi
+  "$KPY" -c "import psutil" 2>/dev/null || die "psutil 仍不可用，请执行: bash install/ensure-psutil.sh"
 fi
-"$KPY" -c "import psutil" 2>/dev/null || die "psutil 仍不可用，请执行: bash install/ensure-psutil.sh"
 
 echo ""
 echo ">>> 正在安装 Klipper 插件 …"
