@@ -1,0 +1,33 @@
+# 断电续打 — 加入 printer.cfg： [include plr.cfg]
+# 请按主板实际接线修改 power_pin，并按需调整 start_gcode / shutdown_gcode
+
+[power_loss_resume]
+power_pin: PA10
+# power_pin: host:gpiochip1/gpio21
+is_shutdown: True
+paused_recover_z: -2.0
+start_gcode:
+    M118 开始续打: {PLR.print_stats.filename}
+    M118 中断位置: X:[{PLR.POS_X}] Y:[{PLR.POS_Y}] Z:[{PLR.POS_Z}] E:[{PLR.POS_E}]
+    {% for name, heater in PLR.heaters.items() %}
+        {% if heater.target > 0 %}
+            SET_HEATER_TEMPERATURE HEATER="{heater.name}" TARGET={heater.target}
+        {% endif %}
+    {% endfor %}
+    {% if PLR.toolhead.extruder in PLR.heaters and PLR.heaters[PLR.toolhead.extruder].target > 0 %}
+        {% set extruder = PLR.heaters[PLR.toolhead.extruder] %}
+        TEMPERATURE_WAIT SENSOR="{extruder.name}" MINIMUM={extruder.target-5} MAXIMUM={extruder.target+5}
+    {% endif %}
+    G91
+    G1 Z2 F100
+    G90
+    G28 X Y
+    M83
+layer_count: 2
+layer_change_gcode:
+    M118 恢复打印速度
+    M106 S{PLR.fan_speed}
+    M220 S{PLR.move_speed_percent}
+    M221 S{PLR.extrude_speed_percent}
+shutdown_gcode:
+    M118 电源电压低，关机

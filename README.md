@@ -1,12 +1,28 @@
-# PLR Git 打包工具（仅 Bash，维护者用）
+# Klipper 断电续打（PLR）
 
-**→ 推到 GitHub 新项目**：见根目录 **`GITHUB_NEW_PROJECT.md`**（HTTPS/SSH、`git remote`、`push` 逐步说明）。
+## 标准 Klipper 上安装（终端用户）
+
+```bash
+git clone https://github.com/zhangbo010/klipper-power-loss-resume.git
+cd klipper-power-loss-resume
+# Debian/Ubuntu：python3-psutil（install 脚本会检查）
+sudo apt install -y python3-psutil
+sudo bash install/install-klipper.sh
+```
+
+将 **`config/plr.cfg.example`** 拷到打印机配置目录并 **`[include plr.cfg]`**。KlipperScreen 续打入口见 **`install/install-klipperscreen.sh`**。
 
 ---
 
-从 **FlyOS rootfs 源码树**（须含 `data/klipper` 等）抽取文件，生成可推送的目录 **`out/klipper-plr-kit/`**。
+# 维护者：Git 打包工具（仅 Bash）
 
-**普通用户**：不要运行本脚本。请直接 **git clone** GitHub 上的发行仓库，在已安装**标准 Klipper** 的机器上执行 `install/install-klipper.sh`（见生成包内的 `README.md`）。
+**→ 推到 GitHub 新项目**：见 **`GITHUB_NEW_PROJECT.md`**。
+
+---
+
+本仓库根目录已包含 **`klipper/`**、**`klipperscreen/`**、**`config/`**，可在**标准 Klipper** 机器上 **`git clone` 后**直接执行 `install/install-klipper.sh`（详见 **`README.template.md`** 生成的说明，或与 GitHub 上 **README** 主文档同步）。
+
+**维护者**：若需从完整 FlyOS `data/` 重新生成发行目录，仍可使用 **`build.sh`** 得到 **`out/klipper-plr-kit/`**。
 
 ## 运行环境（仅维护者）
 
