@@ -40,7 +40,7 @@ bash install.sh
 
 若 **`Permission denied`**：`chmod +x install.sh` 后再 `./install.sh`，或只用 **`bash install.sh`**（`install` 为目录，勿当脚本执行）。
 
-流程：**自动 ensure-psutil**（缺则装，优先 **vendor/psutil**）→ 确认路径 → 安装 Klipper → 可选 **KlipperScreen** → 可选 **Mainsail/Fluidd** → **自动** `plr.cfg`、`printer.cfg` include、`systemctl restart klipper`（及 KS）。须核对 **`power_pin`**；浏览器 **Ctrl+F5** 需自行操作。跳过收尾：`SKIP_AUTO_POST=1`。
+流程：**自动 ensure-psutil**（缺则装，优先 **vendor/psutil**）→ 确认路径 → 安装 Klipper → 可选 **KlipperScreen** → 可选 **Mainsail/Fluidd** → **自动** `plr.cfg`、`printer.cfg` include、`systemctl restart klipper`（及 KS）。须核对 **`plr.cfg`**（**`power_pin`** 可选）；浏览器 **Ctrl+F5** 需自行操作。跳过收尾：`SKIP_AUTO_POST=1`。
 
 ### 4. 仅命令行安装（高级）
 

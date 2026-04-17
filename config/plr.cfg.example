@@ -1,12 +1,10 @@
 # 断电续打 — 加入 printer.cfg： [include plr.cfg]
-# power_pin：有则按键关机前保存；不写 power_pin 则仅用定时快照（通用 Klipper 无专用引脚）
-# snapshot_interval：无 power_pin 时打印中写 .power_loss_recover.json 的周期（秒），默认 1；设为 0 可关闭定时快照
+# power_pin 可选：有则注册电源键/关机检测引脚；通用 Klipper 无专用引脚时可不写（不注册 [buttons]）
 # 按需调整 start_gcode / shutdown_gcode
 
 [power_loss_resume]
 # power_pin: PA10
 # power_pin: host:gpiochip1/gpio21
-# snapshot_interval: 1.0
 is_shutdown: True
 paused_recover_z: -2.0
 start_gcode:
