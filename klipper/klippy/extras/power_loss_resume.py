@@ -104,6 +104,8 @@ class PowerLossResume:
         self.sdcard_dirname = f"/usr/share/{INFO_FILE}"
 
         self.pheaters = None
+        # 用户点「清除续打」后，在本次打印结束或回到空闲前，不再用 Z 快照覆盖 JSON
+        self._plr_cleared_by_user = False
 
         self.gcode.register_command(
             "START_POWER_LOSS_RESUME",
@@ -183,6 +185,7 @@ class PowerLossResume:
     cmd_CLEAR_POWER_LOSS_RESUME_help = "Clear power loss resume info"
 
     def cmd_CLEAR_POWER_LOSS_RESUME(self, gcmd):
+        self._plr_cleared_by_user = True
         self._save_power_loss_info(False)
         gcmd.respond_raw("Power loss resume info cleared")
 
@@ -213,6 +216,7 @@ class PowerLossResume:
         web_request.send({"msg": "Start power loss resume"})
 
     def _handle_clear_power_loss_resume_info(self, web_request):
+        self._plr_cleared_by_user = True
         self._save_power_loss_info(False)
         web_request.send({"msg": "Clear power loss resume info"})
 
@@ -278,67 +282,74 @@ class PowerLossResume:
         return self.print_stats.get_status(eventtime)["state"] == "paused"
 
     def _save_power_loss_info(self, is_power_loss=True):
-        if is_power_loss and self._printer_is_printing():
-            eventtime = self.reactor.monotonic()
-            # 获取所有温度
-            heaters = {}
-            if self.pheaters is not None:
-                for heater_name in self.pheaters.get_all_heaters():
-                    heater = self.pheaters.lookup_heater(heater_name.split()[-1])
-                    temperature, target = heater.get_temp(eventtime)
-                    heaters[heater_name] = {
-                        "name": heater_name.split()[-1],
-                        "temperature": temperature,
-                        "target": target,
-                    }
-            # 获取gcode移动状态
-            gcodestatus = self.gcode_move.get_status()
-            # 获取打印状态
-            printstats = self.print_stats.get_status(eventtime)
-            # 获取风扇速度
-            fan = self.printer.lookup_object("fan", None)
-            # 获取toolhead
-            toolhead = self.printer.lookup_object("toolhead", None)
-            toolhead_status = None
-            if toolhead is not None:
-                toolhead_status = toolhead.get_status(eventtime)
-            # 获取dual_carriage
-            dual_carriage = self.printer.lookup_object("dual_carriage", None)
-            dual_carriage_status = None
-            if dual_carriage is not None:
-                dual_carriage_status = dual_carriage.get_status(eventtime)
-            if (
-                printstats["filename"] == ""
-                and self.power_loss_info is not None
-                and "print_stats" in self.power_loss_info
-            ):
-                printstats = self.power_loss_info["print_stats"]
-            current_object = ""
-            if self.exclude_objects is not None:
-                current_object = self.exclude_objects.current_object
-            fan_speed = 255
-            if fan is not None:
-                fan_speed = int(fan.get_status(eventtime)["speed"] * 255)
-            # 生成数据
-            self.power_loss_info = {
-                "power_loss_resume": True,
-                "is_paused": self._printer_is_paused(),
-                "file_path": self.virtual_sdcard.file_path(),
-                "progress": self.virtual_sdcard.progress(),
-                "is_active": self.virtual_sdcard.is_active(),
-                "file_size": self.virtual_sdcard.file_size,
-                "gcode_move": gcodestatus,
-                "print_stats": printstats,
-                "heaters": heaters,
-                "toolhead": toolhead_status,
-                "dual_carriage": dual_carriage_status,
-                "file_position": self.virtual_sdcard.file_position,
-                "next_file_position": self.virtual_sdcard.next_file_position,
-                "current_object": current_object,
-                "fan_speed": fan_speed,
-                "move_speed_percent": gcodestatus["speed_factor"] * 100,
-                "extrude_speed_percent": gcodestatus["extrude_factor"] * 100,
-            }
+        printing = self._printer_is_printing()
+        if not printing:
+            self._plr_cleared_by_user = False
+
+        if is_power_loss and printing:
+            if self._plr_cleared_by_user:
+                self.power_loss_info = {"power_loss_resume": False}
+            else:
+                eventtime = self.reactor.monotonic()
+                # 获取所有温度
+                heaters = {}
+                if self.pheaters is not None:
+                    for heater_name in self.pheaters.get_all_heaters():
+                        heater = self.pheaters.lookup_heater(heater_name.split()[-1])
+                        temperature, target = heater.get_temp(eventtime)
+                        heaters[heater_name] = {
+                            "name": heater_name.split()[-1],
+                            "temperature": temperature,
+                            "target": target,
+                        }
+                # 获取gcode移动状态
+                gcodestatus = self.gcode_move.get_status()
+                # 获取打印状态
+                printstats = self.print_stats.get_status(eventtime)
+                # 获取风扇速度
+                fan = self.printer.lookup_object("fan", None)
+                # 获取toolhead
+                toolhead = self.printer.lookup_object("toolhead", None)
+                toolhead_status = None
+                if toolhead is not None:
+                    toolhead_status = toolhead.get_status(eventtime)
+                # 获取dual_carriage
+                dual_carriage = self.printer.lookup_object("dual_carriage", None)
+                dual_carriage_status = None
+                if dual_carriage is not None:
+                    dual_carriage_status = dual_carriage.get_status(eventtime)
+                if (
+                    printstats["filename"] == ""
+                    and self.power_loss_info is not None
+                    and "print_stats" in self.power_loss_info
+                ):
+                    printstats = self.power_loss_info["print_stats"]
+                current_object = ""
+                if self.exclude_objects is not None:
+                    current_object = self.exclude_objects.current_object
+                fan_speed = 255
+                if fan is not None:
+                    fan_speed = int(fan.get_status(eventtime)["speed"] * 255)
+                # 生成数据
+                self.power_loss_info = {
+                    "power_loss_resume": True,
+                    "is_paused": self._printer_is_paused(),
+                    "file_path": self.virtual_sdcard.file_path(),
+                    "progress": self.virtual_sdcard.progress(),
+                    "is_active": self.virtual_sdcard.is_active(),
+                    "file_size": self.virtual_sdcard.file_size,
+                    "gcode_move": gcodestatus,
+                    "print_stats": printstats,
+                    "heaters": heaters,
+                    "toolhead": toolhead_status,
+                    "dual_carriage": dual_carriage_status,
+                    "file_position": self.virtual_sdcard.file_position,
+                    "next_file_position": self.virtual_sdcard.next_file_position,
+                    "current_object": current_object,
+                    "fan_speed": fan_speed,
+                    "move_speed_percent": gcodestatus["speed_factor"] * 100,
+                    "extrude_speed_percent": gcodestatus["extrude_factor"] * 100,
+                }
         else:
             self.power_loss_info = {"power_loss_resume": False}
         try:
