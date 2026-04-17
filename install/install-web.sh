@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# 将本仓库内 FlyOS 定制 Mainsail / Fluidd 静态资源部署到 Moonraker 使用的网页根目录
+# 将本仓库 git 内 web/mainsail、web/fluidd 部署到 Moonraker/nginx 使用的网页根目录。
+# 若本机尚无对应目录（无 index.html），则安装到默认路径：~/mainsail、~/fluidd（不下载官方包）。
 # 用法:
 #   sudo INSTALL_WEB=both bash install/install-web.sh
 #   INSTALL_WEB=mainsail|fluidd|both
-# 可选环境变量: MAINSAIL_DIR  FLUIDD_DIR（未设置时自动探测）
+# 可选环境变量: MAINSAIL_DIR  FLUIDD_DIR（未设置时先探测已有安装，再退回默认路径）
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -28,7 +29,7 @@ FD_SRC="${REPO_ROOT}/web/fluidd"
 
 backup_and_copy() {
   local name="$1" src="$2" dst="$3"
-  [[ -f "${src}/index.html" ]] || die "缺少源目录: $src（请使用含 web/ 的完整仓库）"
+  [[ -f "${src}/index.html" ]] || die "缺少源目录: $src（请使用含 web/ 的完整 git 克隆）"
   [[ -n "$dst" ]] || die "未设置 ${name} 目标路径"
   local ts
   ts="$(date +%Y%m%d%H%M%S)"
@@ -39,6 +40,14 @@ backup_and_copy() {
   mkdir -p "$dst"
   echo "==> 部署 ${name}: ${src} -> ${dst}"
   cp -a "${src}/." "${dst}/"
+  # sudo 部署到用户家目录时归还属主，便于 Moonraker/nginx 以普通用户访问
+  if [[ -n "${SUDO_USER:-}" ]] && [[ -d "$dst" ]]; then
+    local eh
+    eh="$(effective_home)"
+    if [[ "$dst" == "$eh"/* ]] || [[ "$dst" == "$eh" ]]; then
+      chown -R "${SUDO_USER}:${SUDO_USER}" "$dst" 2>/dev/null || true
+    fi
+  fi
 }
 
 deploy_mainsail() {
@@ -48,7 +57,8 @@ deploy_mainsail() {
   elif dst="$(detect_mainsail_dir)"; then
     :
   else
-    return 1
+    dst="$(default_mainsail_install_dir)"
+    echo "==> 本机未探测到已有 Mainsail，使用本仓库 web/mainsail 安装到: $dst"
   fi
   backup_and_copy "Mainsail" "$MS_SRC" "$dst"
   return 0
@@ -61,7 +71,8 @@ deploy_fluidd() {
   elif dst="$(detect_fluidd_dir)"; then
     :
   else
-    return 1
+    dst="$(default_fluidd_install_dir)"
+    echo "==> 本机未探测到已有 Fluidd，使用本仓库 web/fluidd 安装到: $dst"
   fi
   backup_and_copy "Fluidd" "$FD_SRC" "$dst"
   return 0
@@ -71,13 +82,8 @@ if [[ "$INSTALL_WEB" == "mainsail" || "$INSTALL_WEB" == "both" ]]; then
   if [[ ! -f "${MS_SRC}/index.html" ]]; then
     [[ "$INSTALL_WEB" == "mainsail" ]] && die "缺少 ${MS_SRC}"
     echo "提示: 无 web/mainsail 源，跳过 Mainsail。"
-  elif deploy_mainsail; then
-    :
   else
-    if [[ "$INSTALL_WEB" == "mainsail" ]]; then
-      die "未找到 Mainsail 目录。请设置 MAINSAIL_DIR（须为含 index.html 的网页根）"
-    fi
-    echo "提示: 未探测到 Mainsail 安装目录，跳过。（仅使用 Fluidd 时可忽略）"
+    deploy_mainsail
   fi
 fi
 
@@ -85,13 +91,8 @@ if [[ "$INSTALL_WEB" == "fluidd" || "$INSTALL_WEB" == "both" ]]; then
   if [[ ! -f "${FD_SRC}/index.html" ]]; then
     [[ "$INSTALL_WEB" == "fluidd" ]] && die "缺少 ${FD_SRC}"
     echo "提示: 无 web/fluidd 源，跳过 Fluidd。"
-  elif deploy_fluidd; then
-    :
   else
-    if [[ "$INSTALL_WEB" == "fluidd" ]]; then
-      die "未找到 Fluidd 目录。请设置 FLUIDD_DIR（须为含 index.html 的网页根）"
-    fi
-    echo "提示: 未探测到 Fluidd 安装目录，跳过。（仅使用 Mainsail 时可忽略）"
+    deploy_fluidd
   fi
 fi
 

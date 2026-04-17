@@ -66,7 +66,7 @@ sudo bash install/install-klipperscreen.sh
 # 或: sudo KLIPPERSCREEN_HOME=/path/to/KlipperScreen bash install/install-klipperscreen.sh
 ```
 
-网页端（覆盖本机已安装的 Mainsail/Fluidd 静态目录，**会先备份**为 `目录名.bak.时间戳`）：
+网页端（**来源为本仓库 git 内 `web/mainsail`、`web/fluidd`**，不下载官方包。若本机尚无对应前端，会装到默认 **`~/mainsail`、`~/fluidd`**；若已存在则覆盖前 **先备份** 为 `目录名.bak.时间戳`）：
 
 ```bash
 sudo INSTALL_WEB=both bash install/install-web.sh

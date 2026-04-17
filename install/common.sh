@@ -97,6 +97,15 @@ detect_klipper_python() {
   return 1
 }
 
+# 无现成安装时，将本仓库 web/* 解压/复制到的默认路径（与 KIAUH 常见布局一致）
+default_mainsail_install_dir() {
+  echo "$(effective_home)/mainsail"
+}
+
+default_fluidd_install_dir() {
+  echo "$(effective_home)/fluidd"
+}
+
 # 探测 Mainsail 静态根目录（须含 index.html）
 detect_mainsail_dir() {
   local d EH

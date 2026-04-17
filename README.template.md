@@ -62,7 +62,7 @@ sudo PRINTER_DATA=/path/to/printer_data bash install/post-setup.sh
 
 ### 6. 网页端
 
-本仓库含 **`web/mainsail`**、**`web/fluidd`**。交互 **`install.sh`** 会询问是否部署；**`/m/`、`/f/` 同机切换**见 **`docs/nginx-generic/README.md`**，并执行 **`sudo bash install/install-nginx-dual-ui.sh`**（按本机目录与 Moonraker 端口生成 nginx）。FlyOS 片段对照见 **`docs/nginx-flyos/`**。部署后强刷浏览器缓存。若 **`/m/` 打不开**，见 **`docs/nginx-flyos/TROUBLESHOOTING.md`**，或运行 **`bash install/diagnose-web-ui.sh`**；已启用 Mainsail 后端端口时可先试 **`http://IP:9081/`**（若改过 **`PLR_MAINSAIL_PORT`** 则用对应端口）。
+本仓库含 **`web/mainsail`**、**`web/fluidd`**（来自 git，**不**拉取官方 zip）。若本机尚无前端，**`install-web.sh`** 会装到默认 **`~/mainsail`、`~/fluidd`**。交互 **`install.sh`** 会询问是否部署；**`/m/`、`/f/` 同机切换**见 **`docs/nginx-generic/README.md`**，并执行 **`sudo bash install/install-nginx-dual-ui.sh`**。FlyOS 片段对照见 **`docs/nginx-flyos/`**。部署后强刷浏览器缓存。若 **`/m/` 打不开**，见 **`docs/nginx-flyos/TROUBLESHOOTING.md`**，或运行 **`bash install/diagnose-web-ui.sh`**；已启用 Mainsail 后端端口时可先试 **`http://IP:9081/`**（若改过 **`PLR_MAINSAIL_PORT`** 则用对应端口）。
 
 ---
 
