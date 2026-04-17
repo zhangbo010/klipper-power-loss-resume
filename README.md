@@ -34,7 +34,10 @@ cd klipper-power-loss-resume
 
 ```bash
 bash install.sh
+# 或: chmod +x install.sh && ./install.sh
 ```
+
+若出现 **`Permission denied`**：多为未带执行权限，执行 **`chmod +x install.sh`** 后再 **`./install.sh`**，或始终使用上面的 **`bash install.sh`**（勿漏写路径；`install` 是目录，不能当作脚本运行）。
 
 流程：**自动 `ensure-psutil`**（缺则装）→ **确认 Klipper / `printer_data` 路径** → **安装 Klipper 插件** → **可选 KlipperScreen** → **可选部署 Mainsail/Fluidd** → **自动**：`plr.cfg.example` 复制为 `plr.cfg`（若尚无）、在 `printer.cfg` 追加 `[include plr.cfg]`、`systemctl restart klipper`（若本步装了 KlipperScreen 则尝试重启其服务）。**仍需你核对** `plr.cfg` 里的 **`power_pin`** 等与主板一致；浏览器缓存请本地 **Ctrl+F5**（脚本无法代劳）。跳过收尾：**`SKIP_AUTO_POST=1`**。
 
