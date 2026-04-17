@@ -41,7 +41,7 @@ sudo apt install -y python3-psutil
 bash install.sh
 ```
 
-流程：检查 **psutil** → 确认 **Klipper** / **printer_data** 路径 → 安装 Klipper 插件 → 可选 **KlipperScreen**。
+流程：检查 **psutil** → 确认 **Klipper** / **printer_data** → 安装 Klipper 插件 → 可选 **KlipperScreen** → 可选 **Mainsail/Fluidd** 部署。
 
 ### 4. 仅命令行安装（高级）
 
@@ -49,6 +49,7 @@ bash install.sh
 sudo bash install/install-klipper.sh
 sudo KLIPPER_HOME=/你的/klipper路径 PRINTER_DATA=/你的/printer_data bash install/install-klipper.sh
 sudo bash install/install-klipperscreen.sh
+sudo INSTALL_WEB=both bash install/install-web.sh
 ```
 
 ### 5. 打印机配置
@@ -57,9 +58,9 @@ sudo bash install/install-klipperscreen.sh
 2. 在 **`printer.cfg`** 中加入：`[include plr.cfg]`
 3. `sudo systemctl restart klipper`
 
-### 6. 网页端（Mainsail / Fluidd）
+### 6. 网页端
 
-若未含定制 `web/`，需自行部署带 PLR 弹窗的前端（见 `docs/SKILL.md`）。
+本仓库含 **`web/mainsail`**、**`web/fluidd`**（续打弹窗）。交互 **`install.sh`** 会询问是否覆盖部署；或 **`sudo INSTALL_WEB=both bash install/install-web.sh`**。部署后强刷浏览器缓存。
 
 ---
 
@@ -70,10 +71,10 @@ sudo bash install/install-klipperscreen.sh
 | `klipper/klippy/extras/` | `power_loss_resume.py`、修改版 `virtual_sdcard.py` |
 | `klipperscreen/` | `screen.py`、`panels/main_menu.py`（PLR 相关改动） |
 | `config/` | `plr.cfg.example` |
-| `install.sh` | **交互安装入口**（推荐） |
-| `install/` | `common.sh`、`install-klipper.sh`、`install-klipperscreen.sh` |
+| `install.sh` | **交互安装入口**（Klipper + 可选 KS + Web） |
+| `install/` | `common.sh`、`install-klipper.sh`、`install-klipperscreen.sh`、`install-web.sh` |
 | `docs/` | 功能说明（Skill 摘要） |
-| `web/` | （可选）Mainsail/Fluidd，仅部分发行方式包含 |
+| `web/mainsail`、`web/fluidd` | 定制前端静态资源 |
 
 **Moonraker** 无需补丁。
 

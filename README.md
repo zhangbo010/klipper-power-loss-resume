@@ -43,7 +43,7 @@ sudo apt install -y python3-psutil
 bash install.sh
 ```
 
-流程：**检查 psutil** → **显示/确认 Klipper 与 `printer_data` 路径** → **安装 Klipper 插件** → **可选安装 KlipperScreen 补丁**。完成后按屏幕提示编辑 `plr.cfg` 并在 `printer.cfg` 中 `[include plr.cfg]`。
+流程：**检查 psutil** → **确认 Klipper / `printer_data` 路径** → **安装 Klipper 插件** → **可选 KlipperScreen** → **可选部署 Mainsail/Fluidd 定制前端（续打弹窗）**。完成后按屏幕提示编辑 `plr.cfg` 并在 `printer.cfg` 中 `[include plr.cfg]`。
 
 ### 4. 仅命令行安装（高级）
 
@@ -64,6 +64,14 @@ sudo bash install/install-klipperscreen.sh
 # 或: sudo KLIPPERSCREEN_HOME=/path/to/KlipperScreen bash install/install-klipperscreen.sh
 ```
 
+网页端（覆盖本机已安装的 Mainsail/Fluidd 静态目录，**会先备份**为 `目录名.bak.时间戳`）：
+
+```bash
+sudo INSTALL_WEB=both bash install/install-web.sh
+# 仅其一: INSTALL_WEB=mainsail 或 fluidd
+# 自定义路径: sudo MAINSAIL_DIR=/path FLUIDD_DIR=/path INSTALL_WEB=both bash install/install-web.sh
+```
+
 ### 5. 打印机配置
 
 1. 将 `config/plr.cfg.example` 复制为 `printer_data/config/plr.cfg`（若安装脚本已写入 `plr.cfg.example`，可复制并改名）。
@@ -75,9 +83,9 @@ sudo bash install/install-klipperscreen.sh
 sudo systemctl restart klipper
 ```
 
-### 6. 网页端（Mainsail / Fluidd）
+### 6. 网页端说明
 
-若仓库中未包含定制 `web/` 静态资源，需自行部署带 PLR 弹窗的 Mainsail/Fluidd（见 `docs/SKILL.md`）。
+本仓库含 **`web/mainsail`**、**`web/fluidd`**（FlyOS 定制构建，带续打弹窗）。交互安装 **`install.sh`** 会询问是否部署；或单独执行上一节的 **`install-web.sh`**。部署后请 **强刷浏览器缓存**（Ctrl+F5）。若你使用上游官方前端且未替换，可参考 `docs/SKILL.md` 自行合并逻辑。
 
 ---
 
@@ -88,8 +96,9 @@ sudo systemctl restart klipper
 | `klipper/klippy/extras/` | `power_loss_resume.py`、修改版 `virtual_sdcard.py` |
 | `klipperscreen/` | KlipperScreen 相关补丁 |
 | `config/` | `plr.cfg.example` |
-| `install.sh` | **交互安装入口**（推荐） |
-| `install/` | `common.sh`、`install-klipper.sh`、`install-klipperscreen.sh` |
+| `install.sh` | **交互安装入口**（Klipper + 可选 KS + 可选 Web） |
+| `install/` | `common.sh`、`install-klipper.sh`、`install-klipperscreen.sh`、`install-web.sh` |
+| `web/mainsail`、`web/fluidd` | 定制前端静态资源（PLR 弹窗） |
 
 **Moonraker** 无需补丁。
 

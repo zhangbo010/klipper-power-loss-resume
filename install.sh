@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PLR 交互安装：依赖检查 → 确认路径 → 安装 Klipper 插件 → 可选 KlipperScreen
+# PLR 交互安装：Klipper → 可选 KlipperScreen → 可选 Mainsail/Fluidd 网页
 # 用法（在仓库根目录）:
 #   bash install.sh
 # 若当前非 root，会自动以 sudo 重新执行本脚本。
@@ -134,6 +134,30 @@ if [[ "${_ks}" == [yY]* ]]; then
   bash "${INST}/install-klipperscreen.sh"
 fi
 
+# --- 可选：Mainsail / Fluidd（定制 PLR 弹窗）---
+WEB_MS="${ROOT}/web/mainsail/index.html"
+WEB_FD="${ROOT}/web/fluidd/index.html"
+if [[ -f "$WEB_MS" ]] || [[ -f "$WEB_FD" ]]; then
+  echo ""
+  echo "网页端：本仓库含定制 Mainsail/Fluidd 静态资源（续打弹窗）。"
+  echo "  [y] 两者都部署  [m] 仅 Mainsail  [f] 仅 Fluidd  [n] 跳过"
+  read -r -p "是否部署到本机 Moonraker 网页目录？[y/m/f/N] " _web
+  _web="${_web:-n}"
+  if [[ "${_web}" == [yY]* ]]; then
+    export INSTALL_WEB=both
+    bash "${INST}/install-web.sh" || echo "提示: 若仅安装其一或路径特殊，可稍后执行: sudo INSTALL_WEB=mainsail|fluidd MAINSAIL_DIR=... FLUIDD_DIR=... bash install/install-web.sh"
+  elif [[ "${_web}" == [mM]* ]] && [[ -f "$WEB_MS" ]]; then
+    export INSTALL_WEB=mainsail
+    bash "${INST}/install-web.sh" || true
+  elif [[ "${_web}" == [fF]* ]] && [[ -f "$WEB_FD" ]]; then
+    export INSTALL_WEB=fluidd
+    bash "${INST}/install-web.sh" || true
+  fi
+else
+  echo ""
+  echo "（未找到 web/mainsail 或 web/fluidd，已跳过网页部署。完整克隆仓库后重试。）"
+fi
+
 echo ""
 echo "======== 安装步骤已完成 ========"
 echo "请手动完成："
@@ -141,4 +165,5 @@ echo "  1. 将 ${PRINTER_DATA:-printer_data}/config/plr.cfg.example 复制为 pl
 echo "  2. 在 printer.cfg 中加入: [include plr.cfg]"
 echo "  3. sudo systemctl restart klipper"
 echo "  4. 若已装 KlipperScreen 补丁，请重启对应服务（如 sudo systemctl restart KlipperScreen）"
+echo "  5. 若已部署网页，请强刷浏览器缓存（Ctrl+F5）"
 echo ""

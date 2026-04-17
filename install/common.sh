@@ -64,3 +64,41 @@ detect_klipperscreen_home() {
   done
   return 1
 }
+
+# 探测 Mainsail 静态根目录（须含 index.html）
+detect_mainsail_dir() {
+  local d EH
+  EH="$(effective_home)"
+  for d in \
+    "${MAINSAIL_DIR:-}" \
+    "${EH}/mainsail" \
+    /home/pi/mainsail \
+    /usr/data/mainsail \
+    /var/www/mainsail; do
+    [[ -z "$d" ]] && continue
+    if [[ -f "$d/index.html" ]]; then
+      echo "$d"
+      return 0
+    fi
+  done
+  return 1
+}
+
+# 探测 Fluidd 静态根目录（须含 index.html）
+detect_fluidd_dir() {
+  local d EH
+  EH="$(effective_home)"
+  for d in \
+    "${FLUIDD_DIR:-}" \
+    "${EH}/fluidd" \
+    /home/pi/fluidd \
+    /usr/data/fluidd \
+    /var/www/fluidd; do
+    [[ -z "$d" ]] && continue
+    if [[ -f "$d/index.html" ]]; then
+      echo "$d"
+      return 0
+    fi
+  done
+  return 1
+}
