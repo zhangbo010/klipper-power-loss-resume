@@ -823,7 +823,12 @@ class VirtualSD:
             except self.gcode.error as e:
                 error_message = str(e)
                 if self.power_loss_resume is not None:
-                    self.power_loss_resume._save_power_loss_info()
+                    try:
+                        self.power_loss_resume._save_power_loss_info()
+                    except Exception:
+                        logging.exception(
+                            "virtual_sdcard: power_loss save after gcode error"
+                        )
                 try:
                     self.gcode.run_script(self.on_error_gcode.render())
                 except:
@@ -848,7 +853,12 @@ class VirtualSD:
                 partial_input = ""
         logging.info("Exiting SD card print (position %d)", self.file_position)
         if self.power_loss_resume is not None and not self.must_pause_work:
-            self.power_loss_resume._save_power_loss_info()
+            try:
+                self.power_loss_resume._save_power_loss_info()
+            except Exception:
+                logging.exception(
+                    "virtual_sdcard: power_loss save on SD exit"
+                )
         self.work_timer = None
         self.cmd_from_sd = False
         if error_message is not None:

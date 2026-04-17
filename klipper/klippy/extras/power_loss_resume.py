@@ -9,6 +9,30 @@ import os, logging, io
 INFO_FILE = ".power_loss_recover.json"
 
 
+def _sanitize_for_json(obj):
+    """将 Klipper get_status 等返回的结构递归转为可 json.dump 的类型。"""
+    if obj is None:
+        return None
+    if isinstance(obj, (bool, int, float, str)):
+        return obj
+    if isinstance(obj, bytes):
+        return obj.decode("utf-8", errors="replace")
+    if isinstance(obj, dict):
+        return {str(k): _sanitize_for_json(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_sanitize_for_json(x) for x in obj]
+    try:
+        if hasattr(obj, "__iter__") and not isinstance(obj, (str, bytes)):
+            return [_sanitize_for_json(x) for x in obj]
+    except Exception:
+        pass
+    try:
+        return float(obj)
+    except (TypeError, ValueError):
+        pass
+    return str(obj)
+
+
 def _persist_power_loss_json(path, data_dict):
     """
     尽量及时落盘：先写同目录 .tmp，fsync 后再原子 replace 到目标文件，
@@ -301,8 +325,12 @@ class PowerLossResume:
             }
         else:
             self.power_loss_info = {"power_loss_resume": False}
-        logging.info(json.dumps(self.power_loss_info, indent=4))
-        _persist_power_loss_json(self.sdcard_dirname, self.power_loss_info)
+        try:
+            safe = _sanitize_for_json(self.power_loss_info)
+            logging.info(json.dumps(safe, indent=4, ensure_ascii=False))
+            _persist_power_loss_json(self.sdcard_dirname, safe)
+        except Exception:
+            logging.exception("power_loss_resume: 落盘或日志序列化失败（已忽略，避免中断打印）")
 
     def _shutdown(self):
         try:
