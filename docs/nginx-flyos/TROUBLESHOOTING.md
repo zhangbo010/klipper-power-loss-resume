@@ -12,6 +12,37 @@
 
 ---
 
+## HTTP **502**（Bad Gateway）
+
+若 **`curl http://127.0.0.1:9081/`** 或 **`http://IP/m/`** 返回 **502**，说明 **nginx 已响应**，但**反向代理到上游失败**（不是「没装静态文件」那么简单）。
+
+常见原因：
+
+1. **Moonraker 未运行或端口不是 7125**  
+   本仓库示例里 **`/api`、`/machine`、`/websocket` 等**会转发到 **`http://127.0.0.1:7125`**。若 Moonraker 停了、或监听在别的地址/端口，这些路径会 **502**。  
+   **纯静态首页**在示例 **`mainsail.9081.conf`** 里走 **`location /` + `try_files`**，理论上**不依赖** Moonraker；若你连 **`GET /` 都是 502**，多半是本机 **9081 的 nginx 配置与示例不一致**（例如整站被 `proxy_pass` 到 Moonraker），或存在其它会触发子请求/代理的指令。
+
+2. **`/m/` 反代到 9081，但 9081 本身已 502**  
+   此时 **80** 上访问 **`/m/`** 也会是 **502**，与你在诊断里看到的现象一致。
+
+**请执行：**
+
+```bash
+# Moonraker 是否在跑、7125 是否通
+systemctl status moonraker --no-pager
+curl -sS -o /dev/null -w "Moonraker HTTP %{http_code}\n" http://127.0.0.1:7125/server/info
+
+# 本机到底是谁在监听 9081、配置是什么
+ss -tlnp | grep 9081
+sudo nginx -T 2>/dev/null | grep -E 'listen 9081|proxy_pass|root ' | head -40
+sudo tail -30 /var/log/nginx/error.log
+```
+
+- **`7125` 不通** → 先 **`sudo systemctl start moonraker`**（并检查 `moonraker.conf` 里端口）。  
+- **Moonraker 正常、仍 502** → 对照 **`docs/nginx-flyos/mainsail.9081.conf`** 检查 **`root`** 与 **`location /`** 是否为静态 `try_files`，必要时用仓库示例**合并/修正**后 **`nginx -t` && `reload`**。
+
+---
+
 ## 快速自检（在打印机 Linux 上执行）
 
 ### 1）9081 上有没有 Mainsail？
@@ -22,7 +53,7 @@ curl -sS -o /dev/null -w "HTTP %{http_code}\n" http://127.0.0.1:9081/
 ```
 
 - **没有进程监听 9081** → 你还没部署 **`mainsail.9081.conf`** 一类配置，或 nginx 未重载。  
-- **`curl` 非 200** → `root` 目录错、空目录、或权限问题。
+- **`curl` 非 200** → 见上文 **502** 小节；**404** 多为 `root` 错或空目录；**502** 多为 Moonraker/代理问题或配置与示例不一致。
 
 **临时绕过**：若已按文档启了 **9081**，可直接试：
 
