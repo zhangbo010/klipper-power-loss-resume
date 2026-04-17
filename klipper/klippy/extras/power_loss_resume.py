@@ -9,17 +9,36 @@ import os, logging, io
 INFO_FILE = ".power_loss_recover.json"
 
 
-def _sanitize_for_json(obj):
-    """将 NaN/Inf 等转为 None，避免 json.dump 抛 ValueError。"""
+def _to_json_safe(obj, _depth=0):
+    """将 Klipper 状态树转为可 json 序列化的纯数据（含 bytes/set/自定义对象）。"""
+    if _depth > 32:
+        return "<max_depth>"
+    if obj is None or isinstance(obj, bool):
+        return obj
+    if isinstance(obj, int):
+        return obj
+    if isinstance(obj, str):
+        return obj
     if isinstance(obj, float):
         if obj != obj or obj in (float("inf"), float("-inf")):
             return None
         return obj
+    if isinstance(obj, (bytes, bytearray)):
+        return obj.decode("utf-8", errors="replace")
     if isinstance(obj, dict):
-        return {k: _sanitize_for_json(v) for k, v in obj.items()}
+        out = {}
+        for k, v in obj.items():
+            sk = str(k) if not isinstance(k, str) else k
+            out[sk] = _to_json_safe(v, _depth + 1)
+        return out
     if isinstance(obj, (list, tuple)):
-        return [_sanitize_for_json(v) for v in obj]
-    return obj
+        return [_to_json_safe(v, _depth + 1) for v in obj]
+    if isinstance(obj, (set, frozenset)):
+        return [_to_json_safe(v, _depth + 1) for v in obj]
+    try:
+        return str(obj)
+    except Exception:
+        return "<error>"
 
 
 class PowerLossResume:
@@ -134,13 +153,17 @@ class PowerLossResume:
             )
 
     def _snapshot_timer(self, eventtime):
-        if self.printer.is_shutdown():
-            return self.reactor.NEVER
-        if self.use_power_pin or self.snapshot_interval <= 0.0:
-            return self.reactor.NEVER
-        if self.printer._is_printing():
-            self._save_power_loss_info(True)
-        return eventtime + self.snapshot_interval
+        try:
+            if self.printer.is_shutdown():
+                return self.reactor.NEVER
+            if self.use_power_pin or self.snapshot_interval <= 0.0:
+                return self.reactor.NEVER
+            if self.printer._is_printing():
+                self._save_power_loss_info(True)
+            return eventtime + self.snapshot_interval
+        except Exception:
+            logging.exception("power_loss_resume: _snapshot_timer failed (ignored)")
+            return eventtime + max(self.snapshot_interval, 1.0)
 
     def get_status(self, eventtime):
         if (
@@ -256,13 +279,22 @@ class PowerLossResume:
             heaters = {}
             if self.pheaters is not None:
                 for heater_name in self.pheaters.get_all_heaters():
-                    heater = self.pheaters.lookup_heater(heater_name.split()[-1])
-                    temperature, target = heater.get_temp(eventtime)
-                    heaters[heater_name] = {
-                        "name": heater_name.split()[-1],
-                        "temperature": temperature,
-                        "target": target,
-                    }
+                    if not str(heater_name).strip():
+                        continue
+                    parts = str(heater_name).split()
+                    hkey = parts[-1] if parts else str(heater_name)
+                    try:
+                        heater = self.pheaters.lookup_heater(hkey)
+                        temperature, target = heater.get_temp(eventtime)
+                        heaters[heater_name] = {
+                            "name": hkey,
+                            "temperature": temperature,
+                            "target": target,
+                        }
+                    except Exception:
+                        logging.exception(
+                            "power_loss_resume: heater snapshot skip %s", heater_name
+                        )
             # 获取gcode移动状态
             gcodestatus = self.gcode_move.get_status()
             # 获取打印状态
@@ -290,7 +322,11 @@ class PowerLossResume:
                 current_object = self.exclude_objects.current_object
             fan_speed = 255
             if fan is not None:
-                fan_speed = int(fan.get_status(eventtime)["speed"] * 255)
+                try:
+                    st = fan.get_status(eventtime)
+                    fan_speed = int(float(st.get("speed", 0.0)) * 255)
+                except Exception:
+                    logging.exception("power_loss_resume: fan status in snapshot")
             # 生成数据
             self.power_loss_info = {
                 "power_loss_resume": True,
@@ -314,8 +350,8 @@ class PowerLossResume:
         else:
             self.power_loss_info = {"power_loss_resume": False}
         with open(self.sdcard_dirname, "w") as file:
-            safe = _sanitize_for_json(self.power_loss_info)
-            json.dump(safe, file, default=str)
+            safe = _to_json_safe(self.power_loss_info)
+            json.dump(safe, file, default=str, ensure_ascii=False)
             os.fsync(file.fileno())
 
     def _shutdown(self):
