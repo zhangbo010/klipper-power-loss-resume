@@ -86,7 +86,9 @@ sudo bash install/post-setup.sh /home/你的用户/printer_data yes
 
 ### 6. 网页端说明
 
-本仓库含 **`web/mainsail`**、**`web/fluidd`**。交互安装会询问是否部署；部署后请在浏览器 **Ctrl+F5** 强刷缓存。若使用上游官方前端且未替换，可参考 `docs/SKILL.md`。
+本仓库含 **`web/mainsail`**、**`web/fluidd`**。交互安装会询问是否部署；部署后请在浏览器 **Ctrl+F5** 强刷缓存。
+
+**`/m/` 与 `/f/` 同机切换（FlyOS 方式）**：仅覆盖静态文件**不够**；需要 **80 端口** 把 `/m/`、`/f/` 分别反代到 **9081 / 9080**，且 **9080、9081** 各有一个 **nginx** `server` 提供对应静态文件与 Moonraker 转发。详见 **`docs/nginx-flyos/README.md`** 及其中示例配置。若使用上游官方前端且未替换，可参考 `docs/SKILL.md`。
 
 ### 故障排除：`No module named 'psutil'`
 

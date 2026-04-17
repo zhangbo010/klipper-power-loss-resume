@@ -1,0 +1,62 @@
+# FlyOS etc/caddy/Caddyfile-m 摘录：:80 上 root 为 mainsail，同时 handle_path /m/* → 9081、/f/* → 9080
+# :9080 / :9081 为 Fluidd / Mainsail 独立站点（与 nginx 双端口方案等价）
+# 使用 Caddy 时请根据本机路径修改 /data/mainsail、/data/fluidd
+
+(upstream) {
+	@moon_ws {
+		header Connection *Upgrade*
+		header Upgrade websocket
+		path /websocket
+	}
+	reverse_proxy @moon_ws localhost:7125
+	@moon_api {
+		path /printer/* /api/* /access/* /machine/* /server/*
+	}
+	reverse_proxy @moon_api localhost:7125
+	reverse_proxy /webcam/ localhost:8080 {
+		header_up X-Accel-Buffering "no"
+	}
+	reverse_proxy /webcam1/ localhost:8081 {
+		header_up X-Accel-Buffering "no"
+	}
+	reverse_proxy /webcam2/ localhost:8082 {
+		header_up X-Accel-Buffering "no"
+	}
+	reverse_proxy /webcam3/ localhost:8083 {
+		header_up X-Accel-Buffering "no"
+	}
+}
+
+(main_site) {
+	root * /data/mainsail
+	file_server
+	import upstream
+	handle_path /f/* {
+		reverse_proxy localhost:9080
+	}
+	handle_path /fluidd/* {
+		reverse_proxy localhost:9080
+	}
+	handle_path /m/* {
+		reverse_proxy localhost:9081
+	}
+	handle_path /mainsail/* {
+		reverse_proxy localhost:9081
+	}
+}
+
+:80 {
+	import main_site
+}
+
+:9080 {
+	root * /data/fluidd
+	file_server
+	import upstream
+}
+
+:9081 {
+	root * /data/mainsail
+	file_server
+	import upstream
+}

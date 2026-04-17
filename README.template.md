@@ -59,7 +59,7 @@ sudo PRINTER_DATA=/path/to/printer_data bash install/post-setup.sh
 
 ### 6. 网页端
 
-本仓库含 **`web/mainsail`**、**`web/fluidd`**（续打弹窗）。交互 **`install.sh`** 会询问是否覆盖部署；或 **`sudo INSTALL_WEB=both bash install/install-web.sh`**。部署后强刷浏览器缓存。
+本仓库含 **`web/mainsail`**、**`web/fluidd`**。交互 **`install.sh`** 会询问是否部署；**`/m/`、`/f/` 同机切换**需按 FlyOS 方式配置 **nginx（或 Caddy）**，见 **`docs/nginx-flyos/README.md`**。部署后强刷浏览器缓存。
 
 ---
 

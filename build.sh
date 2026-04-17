@@ -52,6 +52,10 @@ if [[ -f "$SCRIPT_DIR/docs/SKILL.md" ]]; then
 elif [[ -f "$FLYOS_ROOT/docs/skills/flyos-power-loss-resume/SKILL.md" ]]; then
   cp -a "$FLYOS_ROOT/docs/skills/flyos-power-loss-resume/SKILL.md" "$OUT_DIR/docs/"
 fi
+if [[ -d "$SCRIPT_DIR/docs/nginx-flyos" ]]; then
+  mkdir -p "$OUT_DIR/docs/nginx-flyos"
+  cp -a "$SCRIPT_DIR/docs/nginx-flyos/." "$OUT_DIR/docs/nginx-flyos/"
+fi
 
 GEN="$(date '+%Y-%m-%d %H:%M:%S')"
 sed "s/{{GENERATED_AT}}/$GEN/g" "$SCRIPT_DIR/README.template.md" > "$OUT_DIR/README.md"
