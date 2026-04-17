@@ -41,8 +41,10 @@ cp -a "$DATA/KlipperScreen/panels/main_menu.py" "$OUT_DIR/klipperscreen/panels/"
 if [[ -f "$FLYOS_ROOT/packaging/plr-one-click/bundle/plr.cfg.example" ]]; then
   cp -a "$FLYOS_ROOT/packaging/plr-one-click/bundle/plr.cfg.example" "$OUT_DIR/config/"
 fi
-cp -a "$SCRIPT_DIR/install/install-klipper.sh" "$SCRIPT_DIR/install/install-klipperscreen.sh" "$OUT_DIR/install/"
-chmod +x "$OUT_DIR/install/"*.sh
+cp -a "$SCRIPT_DIR/install/common.sh" "$SCRIPT_DIR/install/install-klipper.sh" \
+  "$SCRIPT_DIR/install/install-klipperscreen.sh" "$OUT_DIR/install/"
+cp -a "$SCRIPT_DIR/install.sh" "$OUT_DIR/install.sh"
+chmod +x "$OUT_DIR/install.sh" "$OUT_DIR/install/"*.sh
 
 if [[ -f "$SCRIPT_DIR/docs/SKILL.md" ]]; then
   cp -a "$SCRIPT_DIR/docs/SKILL.md" "$OUT_DIR/docs/"

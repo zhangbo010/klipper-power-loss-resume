@@ -24,6 +24,8 @@ cd klipper-power-loss-resume
 
 ### 2. 依赖
 
+交互安装会在缺少 **psutil** 时询问是否用 **apt** 安装。也可先手动安装：
+
 ```bash
 sudo apt update
 sudo apt install -y python3-psutil
@@ -31,32 +33,29 @@ sudo apt install -y python3-psutil
 
 其他系统：`pip3 install psutil`（与 Klipper 所用 Python 一致）。
 
-### 3. 安装 Klipper 插件
+### 3. 交互安装（推荐）
 
-在仓库根目录：
+在仓库根目录（非 root 时会自动 `sudo`）：
+
+```bash
+bash install.sh
+```
+
+流程：检查 **psutil** → 确认 **Klipper** / **printer_data** 路径 → 安装 Klipper 插件 → 可选 **KlipperScreen**。
+
+### 4. 仅命令行安装（高级）
 
 ```bash
 sudo bash install/install-klipper.sh
-```
-
-脚本按 **`SUDO_USER`** 解析家目录并探测 Klipper / `printer_data`。失败时显式指定：
-
-```bash
 sudo KLIPPER_HOME=/你的/klipper路径 PRINTER_DATA=/你的/printer_data bash install/install-klipper.sh
+sudo bash install/install-klipperscreen.sh
 ```
 
-### 4. 打印机配置
+### 5. 打印机配置
 
 1. 将 `config/plr.cfg.example` 复制为 `printer_data/config/plr.cfg`（或从已放置的 example 复制改名），按主板修改 **`power_pin`** 等。
 2. 在 **`printer.cfg`** 中加入：`[include plr.cfg]`
 3. `sudo systemctl restart klipper`
-
-### 5. KlipperScreen（可选）
-
-```bash
-sudo bash install/install-klipperscreen.sh
-# 或: sudo KLIPPERSCREEN_HOME=/path/to/KlipperScreen bash install/install-klipperscreen.sh
-```
 
 ### 6. 网页端（Mainsail / Fluidd）
 
@@ -71,7 +70,8 @@ sudo bash install/install-klipperscreen.sh
 | `klipper/klippy/extras/` | `power_loss_resume.py`、修改版 `virtual_sdcard.py` |
 | `klipperscreen/` | `screen.py`、`panels/main_menu.py`（PLR 相关改动） |
 | `config/` | `plr.cfg.example` |
-| `install/` | `install-klipper.sh`、`install-klipperscreen.sh` |
+| `install.sh` | **交互安装入口**（推荐） |
+| `install/` | `common.sh`、`install-klipper.sh`、`install-klipperscreen.sh` |
 | `docs/` | 功能说明（Skill 摘要） |
 | `web/` | （可选）Mainsail/Fluidd，仅部分发行方式包含 |
 

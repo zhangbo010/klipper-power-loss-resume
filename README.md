@@ -24,6 +24,8 @@ cd klipper-power-loss-resume
 
 ### 2. 依赖
 
+交互安装脚本会在缺少 **`psutil`** 时询问是否用 **apt** 安装。也可先手动安装：
+
 Debian / Ubuntu：
 
 ```bash
@@ -31,23 +33,38 @@ sudo apt update
 sudo apt install -y python3-psutil
 ```
 
-其他系统可用：`pip3 install psutil`（需与运行 Klipper 的 Python 一致）。
+其他系统：`pip3 install psutil`（需与运行 Klipper 的 Python 一致）。
 
-### 3. 安装 Klipper 插件
+### 3. 交互安装（推荐）
 
-在**仓库根目录**（包含 `install/install-klipper.sh`）执行：
+在**仓库根目录**执行（非 root 时会自动 `sudo` 提权）：
+
+```bash
+bash install.sh
+```
+
+流程：**检查 psutil** → **显示/确认 Klipper 与 `printer_data` 路径** → **安装 Klipper 插件** → **可选安装 KlipperScreen 补丁**。完成后按屏幕提示编辑 `plr.cfg` 并在 `printer.cfg` 中 `[include plr.cfg]`。
+
+### 4. 仅命令行安装（高级）
+
+不需要交互时，可直接调用子脚本（会按 **`SUDO_USER`** 探测路径；失败时用环境变量）：
 
 ```bash
 sudo bash install/install-klipper.sh
 ```
 
-脚本会按 **`SUDO_USER`** 解析真实用户家目录，并尝试探测 `~/klipper`、`~/printer_data` 等。若探测失败，可显式指定（注意 `sudo` 会丢弃当前 shell 的环境变量，请写在命令前）：
-
 ```bash
 sudo KLIPPER_HOME=/你的/klipper路径 PRINTER_DATA=/你的/printer_data bash install/install-klipper.sh
 ```
 
-### 4. 打印机配置
+KlipperScreen（可选）：
+
+```bash
+sudo bash install/install-klipperscreen.sh
+# 或: sudo KLIPPERSCREEN_HOME=/path/to/KlipperScreen bash install/install-klipperscreen.sh
+```
+
+### 5. 打印机配置
 
 1. 将 `config/plr.cfg.example` 复制为 `printer_data/config/plr.cfg`（若安装脚本已写入 `plr.cfg.example`，可复制并改名）。
 2. 按主板修改 **`power_pin`** 及续打相关宏。
@@ -57,17 +74,6 @@ sudo KLIPPER_HOME=/你的/klipper路径 PRINTER_DATA=/你的/printer_data bash i
 ```bash
 sudo systemctl restart klipper
 ```
-
-### 5. KlipperScreen（可选）
-
-若使用 KlipperScreen，在仓库根目录执行：
-
-```bash
-sudo bash install/install-klipperscreen.sh
-# 或: sudo KLIPPERSCREEN_HOME=/path/to/KlipperScreen bash install/install-klipperscreen.sh
-```
-
-然后重启 KlipperScreen 服务（如 `sudo systemctl restart KlipperScreen`，具体以你系统为准）。
 
 ### 6. 网页端（Mainsail / Fluidd）
 
@@ -82,7 +88,8 @@ sudo bash install/install-klipperscreen.sh
 | `klipper/klippy/extras/` | `power_loss_resume.py`、修改版 `virtual_sdcard.py` |
 | `klipperscreen/` | KlipperScreen 相关补丁 |
 | `config/` | `plr.cfg.example` |
-| `install/` | `install-klipper.sh`、`install-klipperscreen.sh` |
+| `install.sh` | **交互安装入口**（推荐） |
+| `install/` | `common.sh`、`install-klipper.sh`、`install-klipperscreen.sh` |
 
 **Moonraker** 无需补丁。
 

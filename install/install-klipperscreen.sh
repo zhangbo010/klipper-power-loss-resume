@@ -1,37 +1,17 @@
 #!/usr/bin/env bash
 # 在已安装 KlipperScreen 的机器上覆盖 PLR 相关文件（覆盖前自动备份）
 # 用法: sudo bash install/install-klipperscreen.sh
+# 或交互安装: sudo bash install.sh
 # 环境变量（可选）: KLIPPERSCREEN_HOME — 未设置时尝试 ~/KlipperScreen、/home/pi/KlipperScreen
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=common.sh
+source "${SCRIPT_DIR}/common.sh"
+
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 die() { echo "错误: $*" >&2; exit 1; }
-
-effective_home() {
-  if [[ -n "${SUDO_USER:-}" ]]; then
-    getent passwd "$SUDO_USER" | cut -d: -f6
-  else
-    echo "$HOME"
-  fi
-}
-EH="$(effective_home)"
-
-detect_klipperscreen_home() {
-  local d
-  for d in \
-    "${KLIPPERSCREEN_HOME:-}" \
-    "${EH}/KlipperScreen" \
-    /home/pi/KlipperScreen \
-    /usr/share/KlipperScreen; do
-    [[ -z "$d" ]] && continue
-    if [[ -f "$d/screen.py" ]] && [[ -d "$d/panels" ]]; then
-      echo "$d"
-      return 0
-    fi
-  done
-  return 1
-}
 
 [[ "$(id -u)" -eq 0 ]] || die "请使用 sudo 运行"
 
@@ -45,7 +25,7 @@ fi
 
 echo "==> KLIPPERSCREEN_HOME=$KS"
 
-TS="$(date +%Y%m%d%H%M%S")
+TS="$(date +%Y%m%d%H%M%S)"
 for f in screen.py panels/main_menu.py; do
   src="${REPO_ROOT}/klipperscreen/${f}"
   dst="${KS}/${f}"
