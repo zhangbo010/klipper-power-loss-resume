@@ -16,10 +16,11 @@ echo ""
 
 echo ">>> [1b] Moonraker 直连（7125 /server/info）"
 MR_CODE=""
-if MR_CODE=$(curl -sS -o /dev/null -w "%{http_code}" --connect-timeout 3 http://127.0.0.1:7125/server/info 2>/dev/null); then
+# 勿走 HTTP 代理：否则 127.0.0.1 可能被送到公司代理并返回假 502
+if MR_CODE=$(curl --noproxy '*' -sS -o /dev/null -w "%{http_code}" --connect-timeout 3 http://127.0.0.1:7125/server/info 2>/dev/null); then
   echo "    HTTP $MR_CODE"
   if [[ "$MR_CODE" != "200" ]]; then
-    echo "    提示: Moonraker 未正常应答时，依赖它的 nginx 反代会 502。"
+    echo "    提示: 若本机 Moonraker 实际正常，请检查是否设置了 http_proxy；应用 curl --noproxy '*' 或 NO_PROXY=127.0.0.1,localhost 再测。"
   fi
 else
   echo "    失败: 无法连接 127.0.0.1:7125（Moonraker 未运行或端口不是 7125）"
@@ -29,7 +30,7 @@ echo ""
 
 echo ">>> [2] 本机 Mainsail（9081）根路径 HTTP 状态"
 M_CODE=""
-if M_CODE=$(curl -sS -o /tmp/plr-diag-m.html -w "%{http_code}" --connect-timeout 3 http://127.0.0.1:9081/ 2>/dev/null); then
+if M_CODE=$(curl --noproxy '*' -sS -o /tmp/plr-diag-m.html -w "%{http_code}" --connect-timeout 3 http://127.0.0.1:9081/ 2>/dev/null); then
   echo "    HTTP $M_CODE"
   if [[ "$M_CODE" == "502" ]]; then
     echo "    502 Bad Gateway: nginx 反代上游失败。常见：Moonraker(7125) 未起、或 9081 的 server 块与"
@@ -50,7 +51,7 @@ fi
 echo ""
 
 echo ">>> [3] 本机经 80 访问 /m/"
-if curl -sS -o /dev/null -w "    HTTP %{http_code}\n" --connect-timeout 3 http://127.0.0.1/m/ 2>/dev/null; then
+if curl --noproxy '*' -sS -o /dev/null -w "    HTTP %{http_code}\n" --connect-timeout 3 http://127.0.0.1/m/ 2>/dev/null; then
   :
 else
   echo "    失败: 无法访问 http://127.0.0.1/m/"
@@ -67,7 +68,7 @@ echo ""
 
 echo ">>> [5] 建议"
 if [[ "${MR_CODE:-}" != "200" ]] || [[ "${M_CODE:-}" == "502" ]]; then
-  echo "    - 先确认 Moonraker: systemctl status moonraker；curl http://127.0.0.1:7125/server/info 应约返回 200"
+  echo "    - 先确认 Moonraker: systemctl status moonraker；curl --noproxy '*' http://127.0.0.1:7125/server/info 应约返回 200"
 fi
 echo "    - 若 [2] 为连接失败：部署 docs/nginx-flyos/mainsail.9081.conf 并修正 root，再 reload nginx。"
 echo "    - 若 [2] 为 502：按 docs/nginx-flyos/TROUBLESHOOTING.md「HTTP 502」一节排查 error.log 与 nginx -T。"
