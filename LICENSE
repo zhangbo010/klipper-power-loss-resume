@@ -1,0 +1,17 @@
+GNU GENERAL PUBLIC LICENSE
+Version 3, 29 June 2007
+
+Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+
+Everyone is permitted to copy and distribute verbatim copies of this license document, but changing it is not allowed.
+
+This repository bundles components under the GNU General Public License v3:
+
+- `klipper/klippy/extras/power_loss_resume.py` — Copyright (C) 2024 Xiaok; see file header.
+- `klipper/klippy/extras/virtual_sdcard.py` — Derived from Klipper (Copyright (C) Kevin O'Connor et al.) with FlyOS modifications; see Klipper COPYING.
+
+For the **full license text**, see: https://www.gnu.org/licenses/gpl-3.0.txt
+
+Other files (KlipperScreen snippets, install scripts, documentation) are provided under GPLv3 for distribution with the above unless otherwise noted in file headers.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.

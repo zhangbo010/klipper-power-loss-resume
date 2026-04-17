@@ -1,0 +1,11 @@
+# 打包输出目录（若在本仓库内执行 build 脚本）
+out/
+
+# Python
+__pycache__/
+*.py[cod]
+.Python
+
+# OS
+.DS_Store
+Thumbs.db
