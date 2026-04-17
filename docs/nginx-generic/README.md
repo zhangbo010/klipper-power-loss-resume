@@ -61,7 +61,7 @@ sudo bash install/install-nginx-dual-ui.sh
 启用 PLR 前会占用 **`80`**（网关）、**`PLR_FLUIDD_PORT`**（默认 9080）、**`PLR_MAINSAIL_PORT`**（默认 9081）。若本机已有 KIAUH 等 nginx 站点监听这些端口，**`install/nginx-disable-conflicting-sites.sh`** 会：
 
 - 扫描 **`/etc/nginx/sites-enabled/`**（排除 **`plr-*`**），解析各站点配置中的 **`listen`**；  
-- 若 **python3** 可用，解析 `listen` 行，仅当端口为 **80 / 9080 / 9081**（或与当前 **`PLR_*_PORT`** 一致）时，将该站点软链**移入** **`sites-enabled/.plr-disabled-时间戳/`** 备份；  
+- 若 **python3** 可用，解析 `listen` 行，仅当端口为 **`PLR_HTTP_PORT`（默认 80）** 与当前 **`PLR_FLUIDD_PORT`、`PLR_MAINSAIL_PORT`** 时，将该站点软链**移入** **`sites-enabled/.plr-disabled-时间戳/`** 备份；  
 - 若无 **python3**，仅按**文件名** `default`、`fluidd`、`mainsail` 做保守移出（建议安装 `python3` 后重跑）。
 
 **非 nginx** 占用 80（如其它进程）时，脚本**不会**结束该进程，需自行处理；**Moonraker 7125** 不受影响。
