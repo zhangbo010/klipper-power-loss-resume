@@ -82,6 +82,11 @@ class PowerLossResume:
         self.is_shutdown = config.getboolean("is_shutdown", True)
         self.paused_recover_z = config.getfloat("paused_recover_z", 0.0)
         self.layer_count = config.getint("layer_count", 0)
+        # Z 变化触发快照时的最小间隔（秒）；网床/探测时 Z 频繁变化可减轻磁盘与主机负载。
+        # 设为 0 则关闭节流（与旧版行为一致，不推荐在慢主机上使用）。
+        self.z_snapshot_min_interval = config.getfloat(
+            "z_snapshot_min_interval", 1.5, minval=0.0
+        )
         gcode_macro = self.printer.load_object(config, "gcode_macro")
         self.shutdown_gcode = gcode_macro.load_template(config, "shutdown_gcode", "")
         self.layer_change_gcode = gcode_macro.load_template(
@@ -375,7 +380,8 @@ class PowerLossResume:
             self.power_loss_info = {"power_loss_resume": False}
         try:
             safe = _sanitize_for_json(self.power_loss_info)
-            logging.info(json.dumps(safe, indent=4, ensure_ascii=False))
+            # 完整快照体积大，用 info 每次落盘会严重拖慢主机（易诱发 MCU Timer too close）
+            logging.debug("%s", json.dumps(safe, ensure_ascii=False))
             _persist_power_loss_json(self.sdcard_dirname, safe)
         except Exception:
             logging.exception("power_loss_resume: 落盘或日志序列化失败（已忽略，避免中断打印）")

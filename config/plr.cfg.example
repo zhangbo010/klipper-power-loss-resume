@@ -10,6 +10,8 @@
 # power_pin: PA10
 # power_pin: host:gpiochip1/gpio21
 is_shutdown: True
+# Z 变化写快照的最小间隔（秒）；网床/探测等 Z 频繁变化时可减轻主机负载，避免 Timer too close；0=不节流
+z_snapshot_min_interval: 1.5
 paused_recover_z: -2.0
 start_gcode:
     M118 开始续打: {PLR.print_stats.filename}

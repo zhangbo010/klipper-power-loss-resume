@@ -40,6 +40,7 @@ class VirtualSD:
         self.is_resume_speed = False
         # PLR：按 Z 变化打快照（无 power_pin 时主要靠层间 Z 抬升触发）
         self._plr_snap_last_z = None
+        self._plr_snap_last_save_mono = 0.0
         # Work timer
         self.reactor = self.printer.get_reactor()
         self.must_pause_work = self.cmd_from_sd = False
@@ -729,7 +730,14 @@ class VirtualSD:
             return
         if abs(z - self._plr_snap_last_z) <= 1e-5:
             return
+        min_interval = getattr(
+            self.power_loss_resume, "z_snapshot_min_interval", 0.0
+        ) or 0.0
+        now = self.reactor.monotonic()
+        if min_interval > 0.0 and (now - self._plr_snap_last_save_mono) < min_interval:
+            return
         self._plr_snap_last_z = z
+        self._plr_snap_last_save_mono = now
         try:
             self.power_loss_resume._save_power_loss_info()
         except Exception:
@@ -759,6 +767,7 @@ class VirtualSD:
 
         logging.info("Starting SD card print (position %d)", self.file_position)
         self._plr_snap_last_z = None
+        self._plr_snap_last_save_mono = 0.0
         self.reactor.unregister_timer(self.work_timer)
         try:
             self.current_file.seek(self.file_position)
